@@ -408,7 +408,7 @@ void InitialiseObjects()
 		obj->usingDrawAnimatingItem = true;
 		obj->semiTransparent = false;
 		obj->undead = false;
-		obj->zoneType = ZONE_NULL;
+		obj->zoneType = ZTA_None; // set to ZT_Basic when obj init !
 		obj->biteOffset = -1;
 		obj->meshSwapSlot = NO_ITEM;
 		obj->isPickup = false;

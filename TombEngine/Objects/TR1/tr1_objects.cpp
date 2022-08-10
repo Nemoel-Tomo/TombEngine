@@ -41,6 +41,7 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveHitpoints = true;
 		obj->saveAnim = true;
 		obj->saveFlags = true;
+		obj->zoneType = ZTA_Basic;
 		obj->SetBoneRotation(2, ROT_Y); // head
 	}
 
@@ -60,6 +61,7 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveHitpoints = true;
 		obj->saveAnim = true;
 		obj->saveFlags = true;
+		obj->zoneType = ZTA_Basic;
 		obj->SetBoneRotation(13, ROT_Y); // head
 	}
 
@@ -78,7 +80,7 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveHitpoints = true;
 		obj->saveAnim = true;
 		obj->saveFlags = true;
-		obj->zoneType = ZONE_APE;
+		obj->zoneType = ZTA_Ape;
 	}
 
 	obj = &Objects[ID_BIG_RAT];
@@ -98,7 +100,7 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveAnim = true;
 		obj->saveFlags = true;
 		obj->waterCreature = true;
-		obj->zoneType = ZONE_WATER;
+		obj->zoneType = ZTA_Croc;
 		obj->SetBoneRotation(1, ROT_Y); // head
 	}
 
@@ -117,7 +119,8 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveFlags = true;
 		obj->savePosition = true;
 		obj->saveHitpoints = true;
-		obj->SetBoneRotation(2, ROT_X|ROT_Z);
+		obj->zoneType = ZTA_Basic;
+		obj->SetBoneRotation(2, ROT_X | ROT_Z);
 	}
 
 	obj = &Objects[ID_GIANT_MUTANT];
@@ -135,6 +138,7 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveFlags = true;
 		obj->savePosition = true;
 		obj->saveHitpoints = true;
+		obj->zoneType = ZTA_Blockable;
 		obj->SetBoneRotation(1, ROT_Y);
 	}
 
@@ -156,6 +160,7 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveFlags = true;
 		obj->savePosition = true;
 		obj->saveHitpoints = true;
+		obj->zoneType = ZTA_Basic;
 	}
 
 	obj = &Objects[ID_CENTAUR_MUTANT];
@@ -174,7 +179,7 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveHitpoints = true;
 		obj->saveAnim = true;
 		obj->saveFlags = true;
-		obj->zoneType = ZONE_BLOCKABLE;
+		obj->zoneType = ZTA_Blockable;
 		obj->SetBoneRotation(10, ROT_X|ROT_Y);
 	}
 
@@ -194,7 +199,7 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveFlags = true;
 		obj->saveHitpoints = true;
 		obj->savePosition = true;
-		obj->zoneType = ZONE_FLYER;
+		obj->zoneType = ZTA_Fly;
 		obj->SetBoneRotation(1, ROT_Y); // torso
 		obj->SetBoneRotation(2, ROT_Y); // head
 	}

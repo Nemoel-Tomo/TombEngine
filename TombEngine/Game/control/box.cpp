@@ -1485,8 +1485,8 @@ void CreatureAIInfo(ItemInfo* item, AI_INFO* AI)
 	// This prevents enemies from running to Lara and attacking nothing when she is hanging or shimmying. -- Lwmte, 27.06.22
 
 	bool reachable = false;
-	if (object->zoneType == ZoneType::ZONE_FLYER ||
-	   (object->zoneType == ZoneType::ZONE_WATER && TestEnvironment(RoomEnvFlags::ENV_FLAG_WATER, item->RoomNumber)))
+	if (object->zoneType == ZoneType::ZT_Fly ||
+	   (object->zoneType == ZoneType::ZT_Croc && TestEnvironment(RoomEnvFlags::ENV_FLAG_WATER, item->RoomNumber)))
 	{
 		reachable = true; // If NPC is flying or swimming in water, always reach Lara
 	}

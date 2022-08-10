@@ -65,10 +65,10 @@ namespace TEN::Entities::TR2
 		}
 		else
 		{
-			creature->LOT.Step = STEP_SIZE;
-			creature->LOT.Drop = -STEP_SIZE;
+			creature->LOT.Step = CLICK(1);
+			creature->LOT.Drop = -CLICK(1);
 			creature->LOT.Fly = NO_FLYING;
-			creature->LOT.Zone = ZONE_BASIC;
+			creature->LOT.Zone = ZT_Basic;
 
 			AI_INFO AI;
 			CreatureAIInfo(item, &AI);
@@ -77,10 +77,10 @@ namespace TEN::Entities::TR2
 			{
 				if (AI.zoneNumber != AI.enemyZone)
 				{
-					creature->LOT.Step = WALL_SIZE * 20;
-					creature->LOT.Drop = -WALL_SIZE * 20;
-					creature->LOT.Fly = STEP_SIZE / 4;
-					creature->LOT.Zone = ZONE_FLYER;
+					creature->LOT.Step = SECTOR(20);
+					creature->LOT.Drop = -SECTOR(20);
+					creature->LOT.Fly = CLICK(1) / 4;
+					creature->LOT.Zone = ZT_Fly;
 					CreatureAIInfo(item, &AI);
 				}
 			}

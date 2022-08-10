@@ -12,24 +12,36 @@ struct BOX_NODE
 	int boxNumber;
 };
 
-enum ZoneType : char 
+enum ZoneType
 {
-	ZONE_NULL = -1,  // default zone
-	ZONE_SKELLY = 0,
-	ZONE_BASIC,
-	ZONE_FLYER,
-	ZONE_HUMAN_CLASSIC,
-	ZONE_VON_CROY,
-	ZONE_WATER,
-	ZONE_MAX,
-	/// custom zone (using zone above for LOT.zone):
-	ZONE_HUMAN_JUMP_AND_MONKEY,
-	ZONE_HUMAN_JUMP,
-	ZONE_SPIDER,
-	ZONE_BLOCKABLE, // for trex, shiva, etc..
-	ZONE_SOPHIALEE, // dont want sophia to go down again !
-	ZONE_APE,       // only 2 click climb
-	ZONE_HUMAN_LONGJUMP_AND_MONKEY,
+	ZT_Skeleton,
+	ZT_Basic,
+	ZT_Croc, // water zone (also include ground ?)
+	ZT_Human,
+	ZT_VonCroy,
+	ZT_Fly
+};
+
+enum ZoneTypeAttribute
+{
+	ZTA_None = -1, // default zone (which defined
+	ZTA_Skeleton,
+	ZTA_Basic,
+	ZTA_Croc, // water zone (also include ground ?)
+	ZTA_Human, // no jump nor monkey !
+	ZTA_VonCroy, // jump + monkey + longjump
+	ZTA_Fly,
+
+	// these are not real zone, just addons for InitialiseSlot()
+
+	ZTA_HumanJump,
+	ZTA_HumanJumpAndMonkey,
+	ZTA_HumanLongJumpAndMonkey, // von croy
+	ZTA_Spider,
+	ZTA_Blockable, // for trex, shiva, etc..
+	ZTA_SophiaLee, // dont want sophia to go down again !
+	ZTA_Ape, // only 2 click climb
+	ZTA_SkidooArmed
 };
 
 struct LOTInfo 
