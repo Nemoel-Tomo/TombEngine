@@ -73,11 +73,11 @@ namespace TEN::Entities::TR2
 
 		if (item->HitPoints <= 0)
 		{
-			if (item->Animation.ActiveState != 11)
+			if (item->Animation.ActiveState != 7)
 			{
-				item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + 32;
+				item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + 18;
 				item->Animation.FrameNumber = g_Level.Anims[item->Animation.AnimNumber].frameBase;
-				item->Animation.ActiveState = 11;
+				item->Animation.ActiveState = 7;
 			}
 		}
 		else
