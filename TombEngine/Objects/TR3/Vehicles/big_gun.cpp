@@ -81,31 +81,63 @@ namespace TEN::Entities::Vehicles
 		bigGun->XOrientFrame = BGUN_X_ORIENT_MIDDLE_FRAME;
 	}
 
-	static bool BigGunTestMount(ItemInfo* bigGunItem, ItemInfo* laraItem)
+	void BigGunPlayerCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo* coll)
 	{
-		// TODO: If Lara global is not used, the game crashes upon level load. Not sure why. @Sezz 2022.01.09
-		auto* lara = &Lara/* GetLaraInfo(laraItem)*/;
+		auto* bigGunItem = &g_Level.Items[itemNumber];
+		auto* bigGun = GetBigGunInfo(bigGunItem);
+		auto* lara = GetLaraInfo(laraItem);
 
-		if (!(TrInput & IN_ACTION) ||
-			lara->Control.HandStatus != HandStatus::Free ||
-			laraItem->Animation.IsAirborne)
+		if (laraItem->HitPoints <= 0 || lara->Vehicle != NO_ITEM)
+			return;
+
+		auto mountType = GetVehicleMountType(bigGunItem, laraItem, coll, BigGunMountTypes, BGUN_MOUNT_DISTANCE);
+		if (mountType == VehicleMountType::None)
+			ObjectCollision(itemNumber, laraItem, coll);
+		else
 		{
-			return false;
+			lara->Vehicle = itemNumber;
+			DoBigGunMount(bigGunItem, laraItem, mountType);
+		}
+	}
+
+	void DoBigGunMount(ItemInfo* bigGunItem, ItemInfo* laraItem, VehicleMountType mountType)
+	{
+		auto* bigGun = GetBigGunInfo(bigGunItem);
+		auto* lara = GetLaraInfo(laraItem);
+
+		switch (mountType)
+		{
+		case VehicleMountType::LevelStart:
+			laraItem->Animation.AnimNumber = Objects[ID_BIGGUN_ANIMS].animIndex + BGUN_ANIM_ROTATE_VERTICALLY;
+			laraItem->Animation.ActiveState = BGUN_STATE_ROTATE_VERTICALLY;
+			laraItem->Animation.TargetState = BGUN_STATE_ROTATE_VERTICALLY;
+			break;
+
+		default:
+		case VehicleMountType::Back:
+			laraItem->Animation.AnimNumber = Objects[ID_BIGGUN_ANIMS].animIndex + BGUN_ANIM_MOUNT;
+			laraItem->Animation.ActiveState = BGUN_STATE_MOUNT;
+			laraItem->Animation.TargetState = BGUN_STATE_MOUNT;
+			break;
+		}
+		laraItem->Animation.FrameNumber = g_Level.Anims[laraItem->Animation.AnimNumber].frameBase;
+
+		if (lara->Control.Weapon.GunType == LaraWeaponType::Flare)
+		{
+			CreateFlare(laraItem, ID_FLARE_ITEM, false);
+			UndrawFlareMeshes(laraItem);
+
+			lara->Flare.ControlLeft = false;
+			lara->Control.Weapon.GunType = LaraWeaponType::None;
+			lara->Control.Weapon.RequestGunType = LaraWeaponType::None;
 		}
 
-		int x = laraItem->Pose.Position.x - bigGunItem->Pose.Position.x;
-		int y = laraItem->Pose.Position.y - bigGunItem->Pose.Position.y;
-		int z = laraItem->Pose.Position.z - bigGunItem->Pose.Position.z;
-
-		int distance = pow(x, 2) + pow(y, 2) + pow(z, 2);
-		if (distance > SECTOR(30))
-			return false;
-
-		short deltaAngle = abs(laraItem->Pose.Orientation.y - bigGunItem->Pose.Orientation.y);
-		if (deltaAngle > ANGLE(35.0f) || deltaAngle < -ANGLE(35.0f))
-			return false;
-
-		return true;
+		laraItem->Animation.IsAirborne = false;
+		laraItem->Pose = bigGunItem->Pose;
+		lara->Control.HandStatus = HandStatus::Busy;
+		bigGunItem->HitPoints = 1;
+		bigGun->XOrientFrame = BGUN_X_ORIENT_MIDDLE_FRAME;
+		bigGun->Flags = 0;
 	}
 
 	void BigGunFire(ItemInfo* bigGunItem, ItemInfo* laraItem)
@@ -145,35 +177,6 @@ namespace TEN::Entities::Vehicles
 
 			SoundEffect(SFX_TR4_EXPLOSION1, &projectileItem->Pose);
 		}
-	}
-
-	void BigGunCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo* coll)
-	{
-		auto* bigGunItem = &g_Level.Items[itemNumber];
-		auto* bigGun = GetBigGunInfo(bigGunItem);
-		auto* lara = GetLaraInfo(laraItem);
-
-		if (laraItem->HitPoints <= 0 || lara->Vehicle != NO_ITEM)
-			return;
-
-		if (BigGunTestMount(laraItem, bigGunItem))
-		{
-			lara->Vehicle = itemNumber;
-
-			DoVehicleFlareDiscard(laraItem);
-			laraItem->Animation.AnimNumber = Objects[ID_BIGGUN_ANIMS].animIndex + BGUN_ANIM_MOUNT;
-			laraItem->Animation.FrameNumber = g_Level.Anims[Objects[ID_BIGGUN_ANIMS].animIndex + BGUN_ANIM_MOUNT].frameBase;
-			laraItem->Animation.ActiveState = BGUN_STATE_MOUNT;
-			laraItem->Animation.TargetState = BGUN_STATE_MOUNT;
-			laraItem->Animation.IsAirborne = false;
-			laraItem->Pose = bigGunItem->Pose;
-			lara->Control.HandStatus = HandStatus::Busy;
-			bigGunItem->HitPoints = 1;
-			bigGun->XOrientFrame = BGUN_X_ORIENT_MIDDLE_FRAME;
-			bigGun->Flags = 0;
-		}
-		else
-			ObjectCollision(itemNumber, laraItem, coll);
 	}
 
 	bool BigGunControl(ItemInfo* laraItem, CollisionInfo* coll)

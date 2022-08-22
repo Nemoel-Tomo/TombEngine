@@ -444,7 +444,7 @@ static void StartVehicles(ObjectInfo* obj)
 	if (obj->loaded)
 	{
 		obj->initialise = BigGunInitialise;
-		obj->collision = BigGunCollision;
+		obj->collision = BigGunPlayerCollision;
 		obj->hitEffect = HIT_RICOCHET;
 		obj->savePosition = true;
 		obj->saveFlags = true;
