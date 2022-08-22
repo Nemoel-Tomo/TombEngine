@@ -1250,6 +1250,8 @@ struct LaraControlData
 
 struct LaraInfo
 {
+	float Inertia;
+
 	short ItemNumber;
 	LaraControlData Control;
 	LaraInventoryData Inventory;

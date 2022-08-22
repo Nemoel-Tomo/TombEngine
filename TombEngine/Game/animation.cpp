@@ -187,6 +187,85 @@ void AnimateLara(ItemInfo* item)
 	if (lara->Control.Rope.Ptr != -1)
 		DelAlignLaraToRope(item);
 
+	//---
+
+	auto sectorProperty = GetCollision(item).BottomBlock->Flags.Monkeyswing;
+
+	static short directionAngle;
+	if (item->Animation.Velocity.z > lara->Inertia)
+	{
+		lara->Inertia = item->Animation.Velocity.z;
+		directionAngle = LaraCollision.Setup.ForwardAngle;
+	}
+
+	if (!sectorProperty)
+		lara->Inertia = 0;
+
+	if (lara->Inertia && !item->Animation.IsAirborne)
+	{
+		item->Pose.Position.x += (lara->Inertia - item->Animation.Velocity.z) * phd_sin(directionAngle);
+		item->Pose.Position.z += (lara->Inertia - item->Animation.Velocity.z) * phd_cos(directionAngle);
+	}
+
+	if (lara->Inertia != 0)
+		lara->Inertia -= 1;
+
+	//---
+
+	// Other version:
+	//---
+	// Ice surface.
+
+	// Set inertia velocity to item speed if below it.
+	//if (Lara.inertia.velocity < item->speed)
+	//	Lara.inertia.velocity = item->speed;
+
+	//// No inertial velocity, no angle.
+	//if (!Lara.inertia.velocity)
+	//	Lara.inertia.angle = NULL;
+	//// Set new angle if Lara starts again.
+	//else if (Lara.inertia.velocity && Lara.inertia.angle == NULL)
+	//	Lara.inertia.angle = Lara.moveAngle;
+
+	//if (Lara.inertia.angle != NULL)
+	//{
+	//	// Get """ice""" sector property.
+	//	auto isIceFloor = GetCollisionResult(item, 0, 0, 0).BottomBlock->Flags.Monkeyswing;
+
+	//	float rate = 1;
+	//	auto v = item->speed;
+	//	auto a = Lara.moveAngle;
+
+	//	// Setup coordinates within "circle"...
+	//	float xA = v * phd_sin(a);
+	//	float zA = v * phd_cos(a);
+	//	float xB = Lara.inertia.velocity * phd_sin(Lara.inertia.angle);
+	//	float zB = Lara.inertia.velocity * phd_cos(Lara.inertia.angle);
+	//	float dist = sqrt(pow(xB - xA, 2) + pow(zB - zA, 2));
+	//	auto aim = phd_atan(xB - xA, zB - zA);
+	//	xB = rate * aim;
+	//	zB = rate * aim;
+
+	//	// Now, calculate new inertia based on travelled B position.
+	//	Lara.inertia.velocity = sqrt(pow(xB, 2) + pow(zB, 2));
+	//	Lara.inertia.angle = FROM_RAD(asin(xB / Lara.inertia.velocity));
+
+	//	if (abs(Lara.inertia.velocity) < 0.5)
+	//		Lara.inertia.velocity = 0;
+
+	//	if (isIceFloor &&
+	//		Lara.inertia.velocity &&
+	//		!item->gravityStatus)
+	//	{
+	//		item->pos.xPos += (round(Lara.inertia.velocity) - item->speed) * phd_sin(Lara.inertia.angle);
+	//		item->pos.zPos += (round(Lara.inertia.velocity) - item->speed) * phd_cos(Lara.inertia.angle);
+	//		//item->speed += (int)Lara.inertia.velocity >> 16;
+	//		//Lara.moveAngle = Lara.inertia.angle;
+	//	}
+	//}
+
+	//---
+
 	if (!lara->Control.IsMoving)
 		TranslateItem(item, lara->Control.MoveAngle, item->Animation.Velocity.z, 0.0f, item->Animation.Velocity.x);
 
