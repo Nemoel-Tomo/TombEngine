@@ -67,10 +67,12 @@ namespace TEN::Entities::Vehicles
 		int		   Ceiling	= 0;
 	};
 
+	// Workbench
 	//-------------------
 
+	void CalcShift(ItemInfo* vehicleItem, short* extraRot, VehiclePointCollision prevPoint, int height, int front, int side, int step, bool clamp);
 	int GetVehicleHeight(ItemInfo* vehicleItem, int forward, int right, bool clamp, Vector3Int* pos);
-
+	
 	//-------------------
 	
 	VehicleMountType GetVehicleMountType(ItemInfo* vehicleItem, ItemInfo* laraItem, CollisionInfo* coll, vector<VehicleMountType> allowedMountTypes, float maxDistance2D, float maxVerticalDistance = STEPUP_HEIGHT);
@@ -91,9 +93,7 @@ namespace TEN::Entities::Vehicles
 	short ModulateVehicleTurnRate(short turnRate, short accelRate, short minTurnRate, short maxTurnRate, float axisCoeff, bool invert);
 	void  ModulateVehicleTurnRateX(short* turnRate, short accelRate, short minTurnRate, short maxTurnRate, bool invert = true);
 	void  ModulateVehicleTurnRateY(short* turnRate, short accelRate, short minTurnRate, short maxTurnRate, bool invert = false);
-	short ResetVehicleTurnRate(short turnRate, short decelRate);
-	void  ResetVehicleTurnRateX(short* turnRate, short decelRate);
-	void  ResetVehicleTurnRateY(short* turnRate, short decelRate);
+	void  UndoVehicleTurnRate(short* turnRate, short decelRate);
 	void  ModulateVehicleLean(ItemInfo* vehicleItem, short baseRate, short maxAngle);
 	void  ResetVehicleLean(ItemInfo* vehicleItem, float rate);
 }

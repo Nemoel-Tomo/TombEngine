@@ -19,6 +19,18 @@ using namespace TEN::Input;
 
 namespace TEN::Entities::Vehicles
 {
+	// Temp scaffolding function. Shifts need a complete rework. This will simply reduce their littering.
+	void CalcShift(ItemInfo* vehicleItem, short* extraRot, VehiclePointCollision prevPoint, int height, int front, int side, int step, bool clamp)
+	{
+		auto point = GetVehicleCollision(vehicleItem, front, side, clamp);
+
+		if (point.Floor < (prevPoint.Position.y - step) ||
+			abs(point.Ceiling - point.Floor) <= height)
+		{
+			*extraRot += DoVehicleShift(vehicleItem, point.Position, prevPoint.Position);
+		}
+	}
+
 	// Deprecated.
 	int GetVehicleHeight(ItemInfo* vehicleItem, int forward, int right, bool clamp, Vector3Int* pos)
 	{
@@ -533,7 +545,6 @@ namespace TEN::Entities::Vehicles
 		}
 	}
 
-	// TODO: Vehicle turn rates must be affected by speed for more tactile modulation. Slower speeds slow the turn rate.
 	short ModulateVehicleTurnRate(short turnRate, short accelRate, short minTurnRate, short maxTurnRate, float axisCoeff, bool invert)
 	{
 		axisCoeff *= invert ? -1 : 1;
@@ -557,24 +568,14 @@ namespace TEN::Entities::Vehicles
 		*turnRate = ModulateVehicleTurnRate(*turnRate, accelRate, minTurnRate, maxTurnRate, AxisMap[InputAxis::MoveHorizontal], invert);
 	}
 
-	short ResetVehicleTurnRate(short turnRate, short decelRate)
+	void UndoVehicleTurnRate(short* turnRate, short decelRate)
 	{
-		int sign = std::copysign(1, turnRate);
+		int sign = std::copysign(1, *turnRate);
 
-		if (abs(turnRate) > decelRate)
-			return (turnRate - (decelRate * sign));
-		else
-			return 0;
-	}
-
-	void ResetVehicleTurnRateX(short* turnRate, short decelRate)
-	{
-		*turnRate = ResetVehicleTurnRate(*turnRate, decelRate);
-	}
-
-	void ResetVehicleTurnRateY(short* turnRate, short decelRate)
-	{
-		*turnRate = ResetVehicleTurnRate(*turnRate, decelRate);
+		if (abs(*turnRate) <= decelRate)
+			*turnRate = 0;
+		else if (abs(*turnRate) > decelRate)
+			*turnRate += decelRate * -sign;
 	}
 	
 	void ModulateVehicleLean(ItemInfo* vehicleItem, short baseRate, short maxAngle)
