@@ -9,35 +9,58 @@
 #include "Specific/level.h"
 #include "Specific/setup.h"
 
-void InitialiseKillerStatue(short itemNumber)
+using std::vector;
+
+namespace TEN::Entities::Traps
 {
-	auto* item = &g_Level.Items[itemNumber];
+	constexpr auto KILLER_STATUE_DAMAGE = 20;
 
-	item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + 3;
-	item->Animation.FrameNumber = g_Level.Anims[item->Animation.AnimNumber].frameBase;
-	item->Animation.ActiveState = 1;
-}
+	const vector<int> KillerStatueDamageJoints = { 7 };
 
-void KillerStatueControl(short itemNumber)
-{
-	auto* item = &g_Level.Items[itemNumber];
-
-	if (TriggerActive(item) && item->Animation.ActiveState == 1)
-		item->Animation.TargetState = 2;
-	else
-		item->Animation.TargetState = 1;
-
-	if (item->TouchBits & 0x80 && item->Animation.ActiveState == 2)
+	enum KillerStatueState
 	{
-		DoDamage(LaraItem, 20);
+		KSTATUE_STATE_SWORD_UP = 1,
+		KSTATUE_STATE_SWORD_DOWN = 2,
+	};
 
-		int x = LaraItem->Pose.Position.x + (GetRandomControl() - SECTOR(16)) / CLICK(1);
-		int z = LaraItem->Pose.Position.z + (GetRandomControl() - SECTOR(16)) / CLICK(1);
-		int y = LaraItem->Pose.Position.y - GetRandomControl() / 44;
-		int d = (GetRandomControl() - SECTOR(16)) / 8 + LaraItem->Pose.Orientation.y;
+	enum KillerStatueAnim
+	{
+		KSTATUE_ANIM_LIFT_SWORD = 0,
+		KSTATUE_ANIM_SWORD_DOWN = 1,
+		KSTATUE_ANIM_SWING_SWORD = 2,
+		KSTATUE_ANIM_SWORD_UP = 3
+	};
 
-		DoBloodSplat(x, y, z, LaraItem->Animation.Velocity.z, d, LaraItem->RoomNumber);
+	void InitialiseKillerStatue(short itemNumber)
+	{
+		auto* item = &g_Level.Items[itemNumber];
+
+		SetAnimation(item, KSTATUE_ANIM_SWORD_UP);
 	}
 
-	AnimateItem(item);
+	void KillerStatueControl(short itemNumber)
+	{
+		auto* item = &g_Level.Items[itemNumber];
+
+		if (TriggerActive(item) && item->Animation.ActiveState == KSTATUE_STATE_SWORD_UP)
+			item->Animation.TargetState = KSTATUE_STATE_SWORD_DOWN;
+		else
+			item->Animation.TargetState = KSTATUE_STATE_SWORD_UP;
+
+		if (item->TestBits(JointBitType::Touch, KillerStatueDamageJoints) &&
+			item->Animation.ActiveState == KSTATUE_STATE_SWORD_DOWN)
+		{
+			DoDamage(LaraItem, KILLER_STATUE_DAMAGE);
+
+			auto pos = Vector3Int(
+				LaraItem->Pose.Position.x + (GetRandomControl() - SECTOR(16)) / CLICK(1),
+				LaraItem->Pose.Position.z + (GetRandomControl() - SECTOR(16)) / CLICK(1),
+				LaraItem->Pose.Position.y - GetRandomControl() / 44
+			);
+			int angle = (GetRandomControl() - SECTOR(16)) / 8 + LaraItem->Pose.Orientation.y;
+			DoBloodSplat(pos.x, pos.y, pos.z, LaraItem->Animation.Velocity.z, angle, LaraItem->RoomNumber);
+		}
+
+		AnimateItem(item);
+	}
 }

@@ -30,9 +30,8 @@ int KeyTriggerActive;
 
 int TriggerActive(ItemInfo* item)
 {
-	int flag;
+	int flag = (~item->Flags & IFLAG_REVERSE) >> 14;
 
-	flag = (~item->Flags & IFLAG_REVERSE) >> 14;
 	if ((item->Flags & IFLAG_ACTIVATION_MASK) != IFLAG_ACTIVATION_MASK)
 		flag = !flag;
 	else
@@ -56,6 +55,7 @@ int TriggerActive(ItemInfo* item)
 				flag = !flag;
 		}
 	}
+
 	return flag;
 }
 
