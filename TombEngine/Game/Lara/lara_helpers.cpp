@@ -371,23 +371,63 @@ LaraState GetLaraCornerShimmyState(ItemInfo* item, CollisionInfo* coll)
 	return (LaraState)-1;
 }
 
+// TODO: Move these later.
+//------------------------------
+
+Vector3 GetSurfaceNormal(Vector2 tilt)
+{
+	auto normal = Vector3(-tilt.x, -1.0f, -tilt.y);
+	normal.Normalize();
+	return normal;
+}
+
+bool AreAnglesIntersecting(short angle0, short angle1, short referenceAngle)
+{
+	short deltaAngle0 = GetShortestAngularDistance(angle0, referenceAngle);
+	short deltaAngle1 = GetShortestAngularDistance(angle1, referenceAngle);
+
+	if (deltaAngle0 > 0 && deltaAngle1 < 0)
+		return true;
+	else if (deltaAngle0 < 0 && deltaAngle1 > 0)
+		return true;
+
+	return false;
+}
+
+//------------------------------
+
 short GetLaraSlideDirection(ItemInfo* item, CollisionInfo* coll)
 {
-	short headingAngle = coll->Setup.ForwardAngle;
-	auto probe = GetCollision(item);
+	auto floorTilt = GetCollision(item).FloorTilt;
+	short aspectAngle = GetSurfaceAspectAngle(floorTilt);
 
-	// Ground is flat.
-	if (probe.FloorTilt == Vector2::Zero)
-		return headingAngle;
+	auto projectedFloorTilt = GetCollision(item, aspectAngle, item->Animation.Velocity.z).FloorTilt;
+	short projectedAspectAngle = GetSurfaceAspectAngle(projectedFloorTilt);
 
-	// Get either:
-	// a) the surface aspect angle (extended slides), or
-	// b) the derived nearest cardinal direction from it (original slides).
-	headingAngle = GetSurfaceAspectAngle(probe.FloorTilt);
-	if (g_GameFlow->HasSlideExtended())
+	short headingAngle = aspectAngle;
+	if (aspectAngle != projectedAspectAngle)
+	{
+		auto surfaceNormal = GetSurfaceNormal(floorTilt);
+		auto projectedSurfaceNormal = GetSurfaceNormal(projectedFloorTilt);
+
+		// Intersection line of two planes is parallel to cross product of their normal vectors.
+		// Cross surface normals of both slopes to get direction vector of crease.
+		auto intersection = surfaceNormal.Cross(projectedSurfaceNormal);
+
+		if (intersection.y < 0.0f)
+			intersection = -intersection;
+
+		short creaseHeadingAngle = phd_atan(intersection.z, intersection.x);
+
+		// Confirm angles are intersecting.
+		if (AreAnglesIntersecting(aspectAngle, projectedAspectAngle, creaseHeadingAngle))
+			headingAngle = creaseHeadingAngle + ANGLE(180.0f); // TODO: Signs are wrong somewhere. Add 180 for now.
+	}
+
+	//if (g_GameFlow->HasSlideExtended())
 		return headingAngle;
-	else
-		return (GetQuadrant(headingAngle) * ANGLE(90.0f));
+	//else
+	//	return (GetQuadrant(headingAngle) * ANGLE(90.0f));
 }
 
 short ModulateLaraTurnRate(short turnRate, short accelRate, short minTurnRate, short maxTurnRate, float axisCoeff, bool invert)
@@ -769,7 +809,7 @@ void SetLaraSlideAnimation(ItemInfo* item, CollisionInfo* coll)
 	if (abs(coll->FloorTilt.x) <= 2 && abs(coll->FloorTilt.y) <= 2)
 		return;
 
-	short angle = ANGLE(0.0f);
+	/*short angle = ANGLE(0.0f);
 	if (coll->FloorTilt.x > 2)
 		angle = -ANGLE(90.0f);
 	else if (coll->FloorTilt.x < -2)
@@ -778,7 +818,9 @@ void SetLaraSlideAnimation(ItemInfo* item, CollisionInfo* coll)
 	if (coll->FloorTilt.y > 2 && coll->FloorTilt.y > abs(coll->FloorTilt.x))
 		angle = ANGLE(180.0f);
 	else if (coll->FloorTilt.y < -2 && -coll->FloorTilt.y > abs(coll->FloorTilt.x))
-		angle = ANGLE(0.0f);
+		angle = ANGLE(0.0f);*/
+
+	short angle = GetLaraSlideDirection(item, coll);
 
 	short delta = angle - item->Pose.Orientation.y;
 
@@ -810,11 +852,11 @@ void SetLaraSlideAnimation(ItemInfo* item, CollisionInfo* coll)
 // TODO: Do it later.
 void newSetLaraSlideAnimation(ItemInfo* item, CollisionInfo* coll)
 {
-	short headinAngle = GetLaraSlideDirection(item, coll);
-	short deltaAngle = headinAngle - item->Pose.Orientation.y;
+	short headingAngle = GetLaraSlideDirection(item, coll);
+	short deltaAngle = GetShortestAngularDistance(item->Pose.Orientation.y, headingAngle);
 
 	if (!g_GameFlow->HasSlideExtended())
-		item->Pose.Orientation.y = headinAngle;
+		item->Pose.Orientation.y = headingAngle;
 
 	// Snap to height upon entering slide.
 	if (item->Animation.ActiveState != LS_SLIDE_FORWARD &&
