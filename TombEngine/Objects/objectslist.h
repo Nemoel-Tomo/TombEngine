@@ -162,6 +162,7 @@ enum GAME_OBJECT_ID : short
 	ID_HITMAN,
 	ID_SNIPER,
 	ID_CHEF,
+	ID_COMPANION,				// CUSTOM, for Monty's Von Croy version.
 
 	/* Supernatural, boss and others */
 	ID_WINGED_MUMMY = 220,

@@ -1115,6 +1115,7 @@ static const std::unordered_map<std::string, GAME_OBJECT_ID> kObjIDs {
 	{"SAS_DRAG_BLOKE", ID_SAS_DRAG_BLOKE},
 	{"GUIDE", ID_GUIDE},
 	{"VON_CROY", ID_VON_CROY},
+	{"COMPANION", ID_COMPANION},
 	{"TROOPS", ID_TROOPS},
 	{"SAS", ID_SAS},
 	{"SWAT", ID_SWAT},

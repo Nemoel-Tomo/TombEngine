@@ -44,6 +44,7 @@
 #include "tr4_hammerhead.h"
 #include "tr4_dog.h"
 #include "tr4_hammer.h"
+#include "Objects/TEN/Entity/ten_companion.h"
 
 // Objects
 #include "tr4_sarcophagus.h"
@@ -836,6 +837,30 @@ namespace TEN::Entities
 		{
 			obj->initialise = InitialiseVonCroy;
 			obj->control = VonCroyControl;
+			obj->collision = CreatureCollision;
+			obj->pivotLength = 0;
+			obj->shadowType = ShadowMode::All;
+			obj->HitPoints = 15;
+			obj->explodableMeshbits = 0x200000;
+			obj->intelligent = true;
+			obj->saveAnim = true;
+			obj->saveFlags = true;
+			obj->savePosition = true;
+			obj->saveHitpoints = true;
+			obj->saveMesh = true;
+			obj->zoneType = ZONE_HUMAN_LONGJUMP_AND_MONKEY;
+
+			g_Level.Bones[obj->boneIndex + 4 * 6] |= ROT_X;
+			g_Level.Bones[obj->boneIndex + 4 * 6] |= ROT_Y;
+			g_Level.Bones[obj->boneIndex + 4 * 20] |= ROT_X;
+			g_Level.Bones[obj->boneIndex + 4 * 20] |= ROT_Y;
+		}
+
+		obj = &Objects[ID_COMPANION];
+		if (obj->loaded)
+		{
+			obj->initialise = TEN::Entities::CUSTOM::InitialiseCompanion;
+			obj->control = TEN::Entities::CUSTOM::CompanionControl;
 			obj->collision = CreatureCollision;
 			obj->pivotLength = 0;
 			obj->shadowType = ShadowMode::All;
