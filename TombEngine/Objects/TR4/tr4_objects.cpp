@@ -859,8 +859,8 @@ namespace TEN::Entities
 		obj = &Objects[ID_COMPANION];
 		if (obj->loaded)
 		{
-			obj->initialise = TEN::Entities::CUSTOM::InitialiseCompanion;
-			obj->control = TEN::Entities::CUSTOM::CompanionControl;
+			//obj->initialise = TEN::Entities::CUSTOM::InitialiseCompanion;
+			//obj->control = TEN::Entities::CUSTOM::CompanionControl;
 			obj->collision = CreatureCollision;
 			obj->pivotLength = 0;
 			obj->shadowType = ShadowMode::All;
