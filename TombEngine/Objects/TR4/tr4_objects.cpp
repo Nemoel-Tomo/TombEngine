@@ -295,7 +295,7 @@ namespace TEN::Entities
 			obj->saveHitpoints = true;
 			obj->saveAnim = true;
 			obj->saveFlags = true;
-			obj->zoneType = ZONE_HUMAN_CLASSIC;
+			obj->zoneType = ZONE_BASIC; // ZONE_HUMAN_CLASSIC;
 
 			g_Level.Bones[obj->boneIndex] |= ROT_Y;
 			g_Level.Bones[obj->boneIndex] |= ROT_X;
