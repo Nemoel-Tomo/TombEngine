@@ -942,6 +942,5 @@ namespace TEN::Entities::CUSTOM
 		else
 			CreatureAnimation(itemNumber, angle, 0);
 	}
-	}
 }
 
