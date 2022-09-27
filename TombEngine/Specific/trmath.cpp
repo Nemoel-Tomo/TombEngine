@@ -188,7 +188,7 @@ BoundingOrientedBox TO_DX_BBOX(PHD_3DPOS pos, BOUNDING_BOX* box)
 	auto rotation = Quaternion::CreateFromYawPitchRoll(TO_RAD(pos.Orientation.y), TO_RAD(pos.Orientation.x), TO_RAD(pos.Orientation.z));
 
 	BoundingOrientedBox result;
-	BoundingOrientedBox(boxCentre, boxExtent, Vector4::UnitY).Transform(result, 1, rotation, Vector3(pos.Position.x, pos.Position.y, pos.Position.z));
+	BoundingOrientedBox(boxCentre, boxExtent, Vector4::UnitY).Transform(result, 1, rotation, pos.Position.ToVector3());
 	return result;
 }
 
@@ -398,4 +398,25 @@ Vector3Int TranslateVector(Vector3Int& vector, Vector3& direction, float distanc
 		(int)round(newVector.y),
 		(int)round(newVector.z)
 	);
+}
+
+bool IsPointInFront(const PHD_3DPOS& pose, const Vector3& target)
+{
+	return IsPointInFront(pose.Position.ToVector3(), target, pose.Orientation);
+}
+
+bool IsPointInFront(const Vector3& origin, const Vector3& target, const Vector3Shrt& orient)
+{
+	float sinY = phd_sin(orient.y);
+	float cosY = phd_cos(orient.y);
+
+	// The heading angle (Y only) direction vector: X = +sinY, Y = 0, Z = +cosY
+	auto headingDirection = Vector3(sinY, 0.0f, cosY);
+	auto targetDirection = target - origin;
+
+	float dot = headingDirection.Dot(targetDirection);
+	if (dot > 0.0f)
+		return true;
+
+	return false;
 }
