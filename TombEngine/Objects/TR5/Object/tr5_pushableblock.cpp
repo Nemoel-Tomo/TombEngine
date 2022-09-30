@@ -105,47 +105,50 @@ void InitialisePushableBlock(short itemNumber)
 	
 	// Allocate new pushable info.
 	item->Data = PushableInfo();
-	auto* info = (PushableInfo*)item->Data;
+	auto& pushable = GetPushableInfo(item);
 	
-	info->StackLimit = 3; // TODO: Lua.
-	info->Gravity = 8;	  // TODO: Lua.
-	info->Weight = 100;	  // TODO: Lua.
-	info->MoveX = item->Pose.Position.x;
-	info->MoveZ = item->Pose.Position.z;
+	// TODO: Lua.
+	pushable.StackLimit = 3;
+	pushable.Gravity = 8;
+	pushable.Weight = 100;
+
+	pushable.MoveX = item->Pose.Position.x;
+	pushable.MoveZ = item->Pose.Position.z;
 
 	// Read flags from OCB.
 	int OCB = item->TriggerFlags;
 
-	info->CanFall = OCB & 0x20;
-	info->DisablePull = OCB & 0x80;
-	info->DisablePush = OCB & 0x100;
-	info->DisableW = info->DisableE = OCB & 0x200;
-	info->DisableN = info->DisableS = OCB & 0x400;
+	pushable.CanFall = OCB & 0x20;
+	pushable.DisablePull = OCB & 0x80;
+	pushable.DisablePush = OCB & 0x100;
+	pushable.DisableW = pushable.DisableE = OCB & 0x200;
+	pushable.DisableN = pushable.DisableS = OCB & 0x400;
 	
-	info->Climb = 0; // Maybe there will be better way to handle this than OCBs?
+	pushable.Climb = 0; // TODO: Maybe there is a better way to handle this that doesn't involve OCBs?
 	/*
 	pushable.Climb |= (OCB & 0x800) ? CLIMB_WEST : 0;
 	pushable.Climb |= (OCB & 0x1000) ? CLIMB_NORTH : 0;
 	pushable.Climb |= (OCB & 0x2000) ? CLIMB_EAST : 0;
 	pushable.Climb |= (OCB & 0x4000) ? CLIMB_SOUTH : 0;
 	*/
-	info->HasFloorCeiling = false;
+	pushable.HasFloorCeiling = false;
 
 	int height;
-	if (OCB & 0x40 && (OCB & 0x1F) >= 2)
+	if ((OCB & 0x40) && (OCB & 0x1F) >= 2)
 	{
-		info->HasFloorCeiling = true;
+		pushable.HasFloorCeiling = true;
 		TEN::Floordata::AddBridge(itemNumber);
 		height = (OCB & 0x1F) * CLICK(1);
 	}
 	else
 		height = -GetBoundsAccurate(item)->Y1;
 
-	info->Height = height;
+	pushable.Height = height;
 
-	info->LoopSound = SFX_TR4_PUSHABLE_SOUND; // TODO: Lua.
-	info->StopSound = SFX_TR4_PUSH_BLOCK_END; // TODO: Lua.
-	info->FallSound = SFX_TR4_BOULDER_FALL;	  // TODO: Lua.
+	// TODO: Lua.
+	pushable.LoopSound = SFX_TR4_PUSHABLE_SOUND;
+	pushable.StopSound = SFX_TR4_PUSH_BLOCK_END;
+	pushable.FallSound = SFX_TR4_BOULDER_FALL;
 
 	// Check for stack formation when pushables are initialized.
 	FindStack(itemNumber);
