@@ -4,6 +4,7 @@ struct CollisionInfo;
 struct ItemInfo;
 struct PushableInfo;
 
+PushableInfo& GetPushableInfo(const ItemInfo& item);
 PushableInfo& GetPushableInfo(ItemInfo* item);
 void ClearMovableBlockSplitters(int x, int y, int z, short roomNumber);
 void InitialisePushableBlock(short itemNumber);

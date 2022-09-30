@@ -30,6 +30,11 @@ static OBJECT_COLLISION_BOUNDS PushableBlockBounds =
 
 int DoPushPull = 0;
 
+PushableInfo& GetPushableInfo(const ItemInfo& item)
+{
+	return (PushableInfo&)item.Data;
+}
+
 PushableInfo& GetPushableInfo(ItemInfo* item)
 {
 	return (PushableInfo&)item->Data;
@@ -96,51 +101,51 @@ void ClearMovableBlockSplitters(int x, int y, int z, short roomNumber)
 void InitialisePushableBlock(short itemNumber)
 {
 	auto* item = &g_Level.Items[itemNumber];
-	item->ItemFlags[1] = NO_ITEM; // need to use itemFlags[1] to hold linked index for now
+	item->ItemFlags[1] = NO_ITEM; // Need to use itemFlags[1] to hold linked index for now.
 	
 	// Allocate new pushable info.
 	item->Data = PushableInfo();
 	auto* info = (PushableInfo*)item->Data;
 	
-	info->stackLimit = 3; // LUA
-	info->gravity = 8; // LUA
-	info->weight = 100; // LUA
-	info->moveX = item->Pose.Position.x;
-	info->moveZ = item->Pose.Position.z;
+	info->StackLimit = 3; // TODO: Lua.
+	info->Gravity = 8;	  // TODO: Lua.
+	info->Weight = 100;	  // TODO: Lua.
+	info->MoveX = item->Pose.Position.x;
+	info->MoveZ = item->Pose.Position.z;
 
 	// Read flags from OCB.
 	int OCB = item->TriggerFlags;
 
-	info->canFall = OCB & 0x20;
-	info->disablePull = OCB & 0x80;
-	info->disablePush = OCB & 0x100;
-	info->disableW = info->disableE = OCB & 0x200;
-	info->disableN = info->disableS = OCB & 0x400;
+	info->CanFall = OCB & 0x20;
+	info->DisablePull = OCB & 0x80;
+	info->DisablePush = OCB & 0x100;
+	info->DisableW = info->DisableE = OCB & 0x200;
+	info->DisableN = info->DisableS = OCB & 0x400;
 	
-	info->climb = 0; // maybe there will be better way to handle this than OCBs?
+	info->Climb = 0; // Maybe there will be better way to handle this than OCBs?
 	/*
-	pushable.climb |= (OCB & 0x800) ? CLIMB_WEST : 0;
-	pushable.climb |= (OCB & 0x1000) ? CLIMB_NORTH : 0;
-	pushable.climb |= (OCB & 0x2000) ? CLIMB_EAST : 0;
-	pushable.climb |= (OCB & 0x4000) ? CLIMB_SOUTH : 0;
+	pushable.Climb |= (OCB & 0x800) ? CLIMB_WEST : 0;
+	pushable.Climb |= (OCB & 0x1000) ? CLIMB_NORTH : 0;
+	pushable.Climb |= (OCB & 0x2000) ? CLIMB_EAST : 0;
+	pushable.Climb |= (OCB & 0x4000) ? CLIMB_SOUTH : 0;
 	*/
-	info->hasFloorCeiling = false;
+	info->HasFloorCeiling = false;
 
 	int height;
 	if (OCB & 0x40 && (OCB & 0x1F) >= 2)
 	{
-		info->hasFloorCeiling = true;
+		info->HasFloorCeiling = true;
 		TEN::Floordata::AddBridge(itemNumber);
 		height = (OCB & 0x1F) * CLICK(1);
 	}
 	else
 		height = -GetBoundsAccurate(item)->Y1;
 
-	info->height = height;
+	info->Height = height;
 
-	info->loopSound = SFX_TR4_PUSHABLE_SOUND; // LUA
-	info->stopSound = SFX_TR4_PUSH_BLOCK_END; // LUA
-	info->fallSound = SFX_TR4_BOULDER_FALL; // LUA
+	info->LoopSound = SFX_TR4_PUSHABLE_SOUND; // TODO: Lua.
+	info->StopSound = SFX_TR4_PUSH_BLOCK_END; // TODO: Lua.
+	info->FallSound = SFX_TR4_BOULDER_FALL;	  // TODO: Lua.
 
 	// Check for stack formation when pushables are initialized.
 	FindStack(itemNumber);
@@ -161,13 +166,13 @@ void PushableBlockControl(short itemNumber)
 	int x, z;
 	int blockHeight = GetStackHeight(pushableItem);
 
-	// Do sound effects. It works for now;
+	// Do sound effects. It works for now.
 	if (DoPushPull > 0)
-		SoundEffect(pushable.loopSound, &pushableItem->Pose, SoundEnvironment::Always);
+		SoundEffect(pushable.LoopSound, &pushableItem->Pose, SoundEnvironment::Always);
 	else if (DoPushPull < 0)
 	{
 		DoPushPull = 0;
-		SoundEffect(pushable.stopSound, &pushableItem->Pose, SoundEnvironment::Always);
+		SoundEffect(pushable.StopSound, &pushableItem->Pose, SoundEnvironment::Always);
 	}
 
 	// Control falling.
@@ -177,8 +182,8 @@ void PushableBlockControl(short itemNumber)
 
 		if (pushableItem->Pose.Position.y < (floorHeight - pushableItem->Animation.Velocity.y))
 		{
-			if ((pushableItem->Animation.Velocity.y + pushable.gravity) < CLICK(0.5f))
-				pushableItem->Animation.Velocity.y += pushable.gravity;
+			if ((pushableItem->Animation.Velocity.y + pushable.Gravity) < CLICK(0.5f))
+				pushableItem->Animation.Velocity.y += pushable.Gravity;
 			else
 				pushableItem->Animation.Velocity.y++;
 			pushableItem->Pose.Position.y += pushableItem->Animation.Velocity.y;
@@ -195,7 +200,7 @@ void PushableBlockControl(short itemNumber)
 				FloorShake(pushableItem);
 
 			pushableItem->Animation.Velocity.y = 0;
-			SoundEffect(pushable.fallSound, &pushableItem->Pose, SoundEnvironment::Always);
+			SoundEffect(pushable.FallSound, &pushableItem->Pose, SoundEnvironment::Always);
 
 			MoveStackY(itemNumber, relY);
 			AddBridgeStack(itemNumber);
@@ -207,7 +212,7 @@ void PushableBlockControl(short itemNumber)
 			RemoveActiveItem(itemNumber);
 			pushableItem->Status = ITEM_NOT_ACTIVE;
 
-			if (pushable.hasFloorCeiling)
+			if (pushable.HasFloorCeiling)
 			{
 				//AlterFloorHeight(item, -((item->triggerFlags - 64) * 256));
 				AdjustStopperFlag(pushableItem, pushableItem->ItemFlags[0] + 0x8000, false);
@@ -217,7 +222,7 @@ void PushableBlockControl(short itemNumber)
 		return;
 	}
 
-	// Move pushable based on bbox->Z2 of lara->
+	// Move pushable based on bbox->Z2 of lara->Z2.
 	int displaceBox = GetBoundsAccurate(laraItem)->Z2 - 80;
 
 	switch (laraItem->Animation.AnimNumber)
@@ -233,7 +238,7 @@ void PushableBlockControl(short itemNumber)
 		switch (quadrant) 
 		{
 		case 0:
-			z = pushable.moveZ + displaceBox;
+			z = pushable.MoveZ + displaceBox;
 
 			if (abs(pushableItem->Pose.Position.z - z) < CLICK(2) && pushableItem->Pose.Position.z < z)
 				pushableItem->Pose.Position.z = z;
@@ -241,7 +246,7 @@ void PushableBlockControl(short itemNumber)
 			break;
 
 		case 1:
-			x = pushable.moveX + displaceBox;
+			x = pushable.MoveX + displaceBox;
 
 			if (abs(pushableItem->Pose.Position.x - x) < CLICK(2) && pushableItem->Pose.Position.x < x)
 				pushableItem->Pose.Position.x = x;
@@ -249,7 +254,7 @@ void PushableBlockControl(short itemNumber)
 			break;
 
 		case 2:
-			z = pushable.moveZ - displaceBox;
+			z = pushable.MoveZ - displaceBox;
 
 			if (abs(pushableItem->Pose.Position.z - z) < CLICK(2) && pushableItem->Pose.Position.z > z)
 				pushableItem->Pose.Position.z = z;
@@ -257,7 +262,7 @@ void PushableBlockControl(short itemNumber)
 			break;
 
 		case 3:
-			x = pushable.moveX - displaceBox;
+			x = pushable.MoveX - displaceBox;
 
 			if (abs(pushableItem->Pose.Position.x - x) < CLICK(2) && pushableItem->Pose.Position.x > x)
 				pushableItem->Pose.Position.x = x;
@@ -272,7 +277,7 @@ void PushableBlockControl(short itemNumber)
 
 		if (laraItem->Animation.FrameNumber == (g_Level.Anims[laraItem->Animation.AnimNumber].frameEnd - 1))
 		{
-			if (pushable.canFall) // check if pushable is about to fall
+			if (pushable.CanFall) // check if pushable is about to fall
 			{
 				int floorHeight = GetCollision(pushableItem->Pose.Position.x, pushableItem->Pose.Position.y + 10, pushableItem->Pose.Position.z, pushableItem->RoomNumber).Position.Floor;
 				if (floorHeight > pushableItem->Pose.Position.y)
@@ -280,7 +285,7 @@ void PushableBlockControl(short itemNumber)
 					pushableItem->Pose.Position.x = pushableItem->Pose.Position.x & 0xFFFFFE00 | 0x200;
 					pushableItem->Pose.Position.z = pushableItem->Pose.Position.z & 0xFFFFFE00 | 0x200;
 					MoveStackXZ(itemNumber);
-					//SoundEffect(pushable.stopSound, &item->pos, SoundEnvironment::Always);
+					//SoundEffect(pushable.StopSound, &item->pos, SoundEnvironment::Always);
 					DoPushPull = 0;
 					laraItem->Animation.TargetState = LS_IDLE;
 
@@ -295,8 +300,8 @@ void PushableBlockControl(short itemNumber)
 					laraItem->Animation.TargetState = LS_IDLE;
 				else
 				{
-					pushableItem->Pose.Position.x = pushable.moveX = pushableItem->Pose.Position.x & 0xFFFFFE00 | 0x200;
-					pushableItem->Pose.Position.z = pushable.moveZ = pushableItem->Pose.Position.z & 0xFFFFFE00 | 0x200;
+					pushableItem->Pose.Position.x = pushable.MoveX = pushableItem->Pose.Position.x & 0xFFFFFE00 | 0x200;
+					pushableItem->Pose.Position.z = pushable.MoveZ = pushableItem->Pose.Position.z & 0xFFFFFE00 | 0x200;
 					TestTriggers(pushableItem, true, pushableItem->Flags & IFLAG_ACTIVATION_MASK);
 				}
 			}
@@ -317,7 +322,7 @@ void PushableBlockControl(short itemNumber)
 		switch (quadrant)
 		{
 		case NORTH:
-			z = pushable.moveZ + displaceBox;
+			z = pushable.MoveZ + displaceBox;
 
 			if (abs(pushableItem->Pose.Position.z - z) < CLICK(2) && pushableItem->Pose.Position.z > z)
 				pushableItem->Pose.Position.z = z;
@@ -325,7 +330,7 @@ void PushableBlockControl(short itemNumber)
 			break;
 
 		case EAST:
-			x = pushable.moveX + displaceBox;
+			x = pushable.MoveX + displaceBox;
 
 			if (abs(pushableItem->Pose.Position.x - x) < CLICK(2) && pushableItem->Pose.Position.x > x)
 				pushableItem->Pose.Position.x = x;
@@ -333,7 +338,7 @@ void PushableBlockControl(short itemNumber)
 			break;
 
 		case SOUTH:
-			z = pushable.moveZ - displaceBox;
+			z = pushable.MoveZ - displaceBox;
 
 			if (abs(pushableItem->Pose.Position.z - z) < CLICK(2) && pushableItem->Pose.Position.z < z)
 				pushableItem->Pose.Position.z = z;
@@ -341,7 +346,7 @@ void PushableBlockControl(short itemNumber)
 			break;
 
 		case WEST:
-			x = pushable.moveX - displaceBox;
+			x = pushable.MoveX - displaceBox;
 
 			if (abs(pushableItem->Pose.Position.x - x) < CLICK(2) && pushableItem->Pose.Position.x < x)
 				pushableItem->Pose.Position.x = x;
@@ -362,8 +367,8 @@ void PushableBlockControl(short itemNumber)
 					laraItem->Animation.TargetState = LS_IDLE;
 				else
 				{
-					pushableItem->Pose.Position.x = pushable.moveX = pushableItem->Pose.Position.x & 0xFFFFFE00 | 0x200;
-					pushableItem->Pose.Position.z = pushable.moveZ = pushableItem->Pose.Position.z & 0xFFFFFE00 | 0x200;
+					pushableItem->Pose.Position.x = pushable.MoveX = pushableItem->Pose.Position.x & 0xFFFFFE00 | 0x200;
+					pushableItem->Pose.Position.z = pushable.MoveZ = pushableItem->Pose.Position.z & 0xFFFFFE00 | 0x200;
 					TestTriggers(pushableItem, true, pushableItem->Flags & IFLAG_ACTIVATION_MASK);
 				}
 			}
@@ -393,7 +398,7 @@ void PushableBlockControl(short itemNumber)
 			RemoveActiveItem(itemNumber);
 			pushableItem->Status = ITEM_NOT_ACTIVE;
 
-			if (pushable.hasFloorCeiling)
+			if (pushable.HasFloorCeiling)
 			{
 				//AlterFloorHeight(item, -((item->triggerFlags - 64) * 256));
 				AdjustStopperFlag(pushableItem, pushableItem->ItemFlags[0] + 0x8000, false);
@@ -425,7 +430,7 @@ void PushableBlockCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo*
 			(laraItem->Animation.FrameNumber != g_Level.Anims[LA_PUSHABLE_GRAB].frameBase + 19) ||
 			lara->NextCornerPos.Position.x != itemNumber))
 		{
-			if (!pushable.hasFloorCeiling)
+			if (!pushable.HasFloorCeiling)
 				ObjectCollision(itemNumber, laraItem, coll);
 
 			return;
@@ -437,16 +442,16 @@ void PushableBlockCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo*
 		switch (quadrant)
 		{
 		case NORTH:
-			isQuadrantDisabled = pushable.disableN;
+			isQuadrantDisabled = pushable.DisableN;
 			break;
 		case EAST:
-			isQuadrantDisabled = pushable.disableE;
+			isQuadrantDisabled = pushable.DisableE;
 			break;
 		case SOUTH:
-			isQuadrantDisabled = pushable.disableS;
+			isQuadrantDisabled = pushable.DisableS;
 			break;
 		case WEST:
-			isQuadrantDisabled = pushable.disableW;
+			isQuadrantDisabled = pushable.DisableW;
 			break;
 		}
 
@@ -461,14 +466,14 @@ void PushableBlockCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo*
 
 		if (TrInput & IN_FORWARD)
 		{
-			if (!TestBlockPush(pushableItem, blockHeight, quadrant) || pushable.disablePush)
+			if (!TestBlockPush(pushableItem, blockHeight, quadrant) || pushable.DisablePush)
 				return;
 
 			laraItem->Animation.TargetState = LS_PUSHABLE_PUSH;
 		}
 		else if (TrInput & IN_BACK)
 		{
-			if (!TestBlockPull(pushableItem, blockHeight, quadrant) || pushable.disablePull)
+			if (!TestBlockPull(pushableItem, blockHeight, quadrant) || pushable.DisablePull)
 				return;
 
 			laraItem->Animation.TargetState = LS_PUSHABLE_PULL;
@@ -480,10 +485,10 @@ void PushableBlockCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo*
 		AddActiveItem(itemNumber);
 		ResetLaraFlex(laraItem);
 		
-		pushable.moveX = pushableItem->Pose.Position.x;
-		pushable.moveZ = pushableItem->Pose.Position.z;
+		pushable.MoveX = pushableItem->Pose.Position.x;
+		pushable.MoveZ = pushableItem->Pose.Position.z;
 
-		if (pushable.hasFloorCeiling)
+		if (pushable.HasFloorCeiling)
 		{
 			//AlterFloorHeight(item, ((item->triggerFlags - 64) * 256));
 			AdjustStopperFlag(pushableItem, pushableItem->ItemFlags[0], false);
@@ -508,7 +513,7 @@ void PushableBlockCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo*
 			else
 				PushableBlockPos.z = bounds->Z1 - 35;
 
-			if (pushable.hasFloorCeiling)
+			if (pushable.HasFloorCeiling)
 			{					
 				// For now, don't use auto-align function because it can collide with player's vault.
 				laraItem->Pose.Orientation = pushableItem->Pose.Orientation;
@@ -570,14 +575,14 @@ void PushEnd(ItemInfo* item)
 
 bool TestBlockMovable(ItemInfo* item, int blockHeight)
 {
-	auto pointColl = GetCollision(item);
+	auto collPoint = GetCollision(item);
 
 	// Assess for wall.
-	if (pointColl.BottomBlock->IsWall(pointColl.BottomBlock->SectorPlane(item->Pose.Position.x, item->Pose.Position.z)))
+	if (collPoint.BottomBlock->IsWall(collPoint.BottomBlock->SectorPlane(item->Pose.Position.x, item->Pose.Position.z)))
 		return false;
 
 	// Determine whether surface is level.
-	if (pointColl.Position.Floor != item->Pose.Position.y)
+	if (collPoint.Position.Floor != item->Pose.Position.y)
 		return false;
 
 	return true;
@@ -610,24 +615,24 @@ bool TestBlockPush(ItemInfo* item, int blockHeight, unsigned short quadrant)
 		break;
 	}
 
-	auto pointColl = GetCollision(x, y - blockHeight, z, item->RoomNumber);
+	auto collPoint = GetCollision(x, y - blockHeight, z, item->RoomNumber);
 
-	auto* room = &g_Level.Rooms[pointColl.RoomNumber];
+	auto* room = &g_Level.Rooms[collPoint.RoomNumber];
 	if (GetSector(room, x - room->x, z - room->z)->Stopper)
 		return false;
 
-	if (pointColl.Position.FloorSlope || pointColl.Position.DiagonalStep ||
-		pointColl.Block->FloorSlope(0) != Vector2::Zero || pointColl.Block->FloorSlope(1) != Vector2::Zero)
+	if (collPoint.Position.FloorSlope || collPoint.Position.DiagonalStep ||
+		collPoint.Block->FloorSlope(0) != Vector2::Zero || collPoint.Block->FloorSlope(1) != Vector2::Zero)
 		return false;
 
-	if (pushable.canFall)
+	if (pushable.CanFall)
 	{
-		if (pointColl.Position.Floor < y)
+		if (collPoint.Position.Floor < y)
 			return false;
 	}
 	else
 	{
-		if (pointColl.Position.Floor != y)
+		if (collPoint.Position.Floor != y)
 			return false;
 	}
 
@@ -701,13 +706,13 @@ bool TestBlockPull(ItemInfo* pushableItem, int blockHeight, short quadrant)
 	if (GetSector(room, x - room->x, z - room->z)->Stopper)
 		return false;
 
-	auto pointColl = GetCollision(x, y - blockHeight, z, pushableItem->RoomNumber);
+	auto collPoint = GetCollision(x, y - blockHeight, z, pushableItem->RoomNumber);
 
-	if (pointColl.Position.Floor != y)
+	if (collPoint.Position.Floor != y)
 		return false;
 
-	if (pointColl.Position.FloorSlope || pointColl.Position.DiagonalStep ||
-		pointColl.Block->FloorSlope(0) != Vector2::Zero || pointColl.Block->FloorSlope(1) != Vector2::Zero)
+	if (collPoint.Position.FloorSlope || collPoint.Position.DiagonalStep ||
+		collPoint.Block->FloorSlope(0) != Vector2::Zero || collPoint.Block->FloorSlope(1) != Vector2::Zero)
 		return false;
 
 	int ceiling = y - blockHeight + 100;
@@ -763,16 +768,16 @@ bool TestBlockPull(ItemInfo* pushableItem, int blockHeight, short quadrant)
 
 	roomNumber = laraItem->RoomNumber;
 
-	pointColl = GetCollision(x, y - LARA_HEIGHT, z, laraItem->RoomNumber);
+	collPoint = GetCollision(x, y - LARA_HEIGHT, z, laraItem->RoomNumber);
 
 	room = &g_Level.Rooms[roomNumber];
 	if (GetSector(room, x - room->x, z - room->z)->Stopper)
 		return false;
 
-	if (pointColl.Position.Floor != y)
+	if (collPoint.Position.Floor != y)
 		return false;
 
-	if (pointColl.Block->CeilingHeight(x, z) > y - LARA_HEIGHT)
+	if (collPoint.Block->CeilingHeight(x, z) > y - LARA_HEIGHT)
 		return false;
 
 	prevX = laraItem->Pose.Position.x;
@@ -856,10 +861,10 @@ void MoveStackY(short itemNumber, int y)
 
 void AddBridgeStack(short itemNumber)
 {
-	auto* item = &g_Level.Items[itemNumber];
+	const auto& item = g_Level.Items[itemNumber];
 	const auto& pushable = GetPushableInfo(item);
 
-	if (pushable.hasFloorCeiling)
+	if (pushable.HasFloorCeiling)
 		TEN::Floordata::AddBridge(itemNumber);
 
 	int stackIndex = g_Level.Items[itemNumber].ItemFlags[1];
@@ -867,7 +872,7 @@ void AddBridgeStack(short itemNumber)
 	{
 		auto* stackItem = &g_Level.Items[stackIndex];
 
-		if (pushable.hasFloorCeiling)
+		if (pushable.HasFloorCeiling)
 			TEN::Floordata::AddBridge(stackIndex);
 
 		stackIndex = g_Level.Items[stackIndex].ItemFlags[1];
@@ -876,10 +881,10 @@ void AddBridgeStack(short itemNumber)
 
 void RemoveBridgeStack(short itemNumber)
 {
-	auto* item = &g_Level.Items[itemNumber];
+	const auto& item = g_Level.Items[itemNumber];
 	const auto& pushable = GetPushableInfo(item);
 
-	if (pushable.hasFloorCeiling)
+	if (pushable.HasFloorCeiling)
 		TEN::Floordata::RemoveBridge(itemNumber);
 
 	int stackIndex = g_Level.Items[itemNumber].ItemFlags[1];
@@ -887,7 +892,7 @@ void RemoveBridgeStack(short itemNumber)
 	{
 		auto* stackItem = &g_Level.Items[stackIndex];
 
-		if (pushable.hasFloorCeiling)
+		if (pushable.HasFloorCeiling)
 			TEN::Floordata::RemoveBridge(stackIndex);
 
 		stackIndex = g_Level.Items[stackIndex].ItemFlags[1];
@@ -902,13 +907,13 @@ void RemoveFromStack(short itemNumber)
 		if (i == itemNumber)
 			continue;
 
-		auto* itemBelow = &g_Level.Items[i];
+		auto& itemBelow = g_Level.Items[i];
 
-		int objectNumber = itemBelow->ObjectNumber;
+		int objectNumber = itemBelow.ObjectNumber;
 		if (objectNumber >= ID_PUSHABLE_OBJECT1 && objectNumber <= ID_PUSHABLE_OBJECT10)
 		{
-			if (itemBelow->ItemFlags[1] == itemNumber)
-				itemBelow->ItemFlags[1] = NO_ITEM;
+			if (itemBelow.ItemFlags[1] == itemNumber)
+				itemBelow.ItemFlags[1] = NO_ITEM;
 		}
 	}
 }
@@ -916,7 +921,7 @@ void RemoveFromStack(short itemNumber)
 int FindStack(short itemNumber)
 {
 	int stackTop = NO_ITEM;		// Index of heighest pushable in stack.
-	int stackYmin = CLICK(256); // Set starting height
+	int stackYmin = SECTOR(64); // Set starting height
 
 	// Check for pushable directly below current one in the same sector.
 	for (int i = 0; i < g_Level.NumItems; i++)
@@ -924,24 +929,24 @@ int FindStack(short itemNumber)
 		if (i == itemNumber)
 			continue;
 
-		auto* itemBelow = &g_Level.Items[i];
+		const auto& itemBelow = g_Level.Items[i];
 
-		int objectNumber = itemBelow->ObjectNumber;
-		if (objectNumber >= ID_PUSHABLE_OBJECT1 && objectNumber <= ID_PUSHABLE_OBJECT10)
+		int objectNumber = itemBelow.ObjectNumber;
+		if (objectNumber >= ID_PUSHABLE_OBJECT1 &&
+			objectNumber <= ID_PUSHABLE_OBJECT10)
 		{
-			auto* item = &g_Level.Items[itemNumber];
-			int x = item->Pose.Position.x;
-			int y = item->Pose.Position.y;
-			int z = item->Pose.Position.z;
+			const auto& item = g_Level.Items[itemNumber];
 
-			if (itemBelow->Pose.Position.x == x && itemBelow->Pose.Position.z == z)
+			if (itemBelow.Pose.Position.x == item.Pose.Position.x &&
+				itemBelow.Pose.Position.z == item.Pose.Position.z)
 			{
 				// Set heighest pushable so far as top of stack.
-				int belowY = itemBelow->Pose.Position.y;
-				if (belowY > y && belowY < stackYmin)
+				int belowY = itemBelow.Pose.Position.y;
+				if (belowY > item.Pose.Position.y &&
+					belowY < stackYmin)
 				{
 					stackTop = i;
-					stackYmin = itemBelow->Pose.Position.y;
+					stackYmin = itemBelow.Pose.Position.y;
 				}
 			}
 		}
@@ -957,13 +962,13 @@ int GetStackHeight(ItemInfo* item)
 {
 	const auto& pushable = GetPushableInfo(item);
 
-	int height = pushable.height;
+	int height = pushable.Height;
 
 	auto* stackItem = item;
 	while (stackItem->ItemFlags[1] != NO_ITEM)
 	{
 		stackItem = &g_Level.Items[stackItem->ItemFlags[1]];
-		height += pushable.height;
+		height += pushable.Height;
 	}
 
 	return height;
@@ -973,7 +978,7 @@ bool CheckStackLimit(ItemInfo* item)
 {
 	const auto& pushable = GetPushableInfo(item);
 
-	int limit = pushable.stackLimit;
+	int limit = pushable.StackLimit;
 	
 	int count = 1;
 	auto* stackItem = item;
@@ -992,22 +997,23 @@ bool CheckStackLimit(ItemInfo* item)
 std::optional<int> PushableBlockFloor(short itemNumber, int x, int y, int z)
 {
 	const auto& item = g_Level.Items[itemNumber];
-	const auto& pushable = (PushableInfo&)item.Data;
+	const auto& pushable = GetPushableInfo(item);
 	
-	if (item.Status != ITEM_INVISIBLE && pushable.hasFloorCeiling)
+	if (item.Status != ITEM_INVISIBLE && pushable.HasFloorCeiling)
 	{
-		const auto height = item.Pose.Position.y - (item.TriggerFlags & 0x1F) * CLICK(1);
-		return std::optional{height};
+		int height = item.Pose.Position.y - (item.TriggerFlags & 0x1F) * CLICK(1);
+		return std::optional{ height };
 	}
+
 	return std::nullopt;
 }
 
 std::optional<int> PushableBlockCeiling(short itemNumber, int x, int y, int z)
 {
 	const auto& item = g_Level.Items[itemNumber];
-	const auto& pushable = (PushableInfo&)item.Data;
+	const auto& pushable = GetPushableInfo(item);
 
-	if (item.Status != ITEM_INVISIBLE && pushable.hasFloorCeiling)
+	if (item.Status != ITEM_INVISIBLE && pushable.HasFloorCeiling)
 		return std::optional{item.Pose.Position.y};
 
 	return std::nullopt;
@@ -1017,7 +1023,7 @@ int PushableBlockFloorBorder(short itemNumber)
 {
 	const auto& item = g_Level.Items[itemNumber];
 
-	const auto height = item.Pose.Position.y - (item.TriggerFlags & 0x1F) * CLICK(1);
+	int height = item.Pose.Position.y - (item.TriggerFlags & 0x1F) * CLICK(1);
 	return height;
 }
 
