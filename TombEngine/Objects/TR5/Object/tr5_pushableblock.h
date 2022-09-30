@@ -1,15 +1,17 @@
 #pragma once
 
-struct ItemInfo;
 struct CollisionInfo;
+struct ItemInfo;
+struct PushableInfo;
 
+PushableInfo& GetPushableInfo(ItemInfo* item);
 void ClearMovableBlockSplitters(int x, int y, int z, short roomNumber);
 void InitialisePushableBlock(short itemNumber);
 void PushableBlockControl(short itemNumber);
 void PushableBlockCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo* coll);
 bool TestBlockMovable(ItemInfo* item, int blockHeight);
 bool TestBlockPush(ItemInfo* item, int blockHeight, unsigned short quadrant);
-bool TestBlockPull(ItemInfo* item, int blockHeight, short quadrant);
+bool TestBlockPull(ItemInfo* pushableItem, int blockHeight, short quadrant);
 void MoveStackXZ(short itemNumber);
 void MoveStackY(short itemNumber, int y);
 void RemoveBridgeStack(short itemNumber);

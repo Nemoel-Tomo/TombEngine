@@ -2,19 +2,19 @@
 
 struct PushableInfo
 {
-	int height;				// height for collision, also in floor procedure
+	int height;				// Height for collision. Also in floor procedure.
 	int weight;
 	int stackLimit;
-	int moveX;				// used for pushable movement code
-	int moveZ;				// used for pushable movement code
-	short linkedIndex;		// using itemFlags[1] for now
-	short gravity;			// fall acceleration
-	short loopSound;		// looped sound index for movement
-	short stopSound;		// ending sound index
-	short fallSound;		// sound on hitting floor (if dropped)
-	short climb;			// not used for now
+	int moveX;				// Used for pushable movement code.
+	int moveZ;				// Used for pushable movement code
+	short linkedIndex;		// Using itemFlags[1] for now
+	short gravity;			// Fall acceleration
+	short loopSound;		// Looped sound index for movement
+	short stopSound;		// Ending sound index
+	short fallSound;		// Sound on hitting floor (if dropped)
+	short climb;			// Unused for now.
 	bool canFall;			// OCB 32
-	bool hasFloorCeiling;			// has floor and ceiling procedures (OCB 64)
+	bool hasFloorCeiling;	// has floor and ceiling procedures (OCB 64)
 	bool disablePull;		// OCB 128
 	bool disablePush;		// OCB 256
 	bool disableW;			// OCB 512 (W+E)
