@@ -6,6 +6,7 @@ struct PushableInfo;
 
 PushableInfo& GetPushableInfo(const ItemInfo& item);
 PushableInfo& GetPushableInfo(ItemInfo* item);
+
 void ClearMovableBlockSplitters(int x, int y, int z, short roomNumber);
 void InitialisePushableBlock(short itemNumber);
 void PushableBlockControl(short itemNumber);
@@ -21,8 +22,6 @@ void RemoveFromStack(short itemNumber);
 int FindStack(short itemNumber);
 int GetStackHeight(ItemInfo* item);
 bool CheckStackLimit(ItemInfo* item);
-void PushLoop(ItemInfo* item);
-void PushEnd(ItemInfo* item);
 std::optional<int> PushableBlockFloor(short itemNumber, int x, int y, int z);
 std::optional<int> PushableBlockCeiling(short itemNumber, int x, int y, int z);
 int PushableBlockFloorBorder(short itemNumber);

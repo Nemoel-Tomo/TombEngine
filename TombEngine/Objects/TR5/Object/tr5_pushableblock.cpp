@@ -28,8 +28,6 @@ static OBJECT_COLLISION_BOUNDS PushableBlockBounds =
 	ANGLE(-10.0f), ANGLE(10.0f)
 };
 
-int DoPushPull = 0;
-
 PushableInfo& GetPushableInfo(const ItemInfo& item)
 {
 	return (PushableInfo&)item.Data;
@@ -46,7 +44,7 @@ void ClearMovableBlockSplitters(int x, int y, int z, short roomNumber)
 	if (floor->Box == NO_BOX)
 		return;
 
-	g_Level.Boxes[floor->Box].flags &= (~BLOCKED);
+	g_Level.Boxes[floor->Box].flags &= ~BLOCKED;
 	short height = g_Level.Boxes[floor->Box].height;
 	short baseRoomNumber = roomNumber;
 	
@@ -124,13 +122,13 @@ void InitialisePushableBlock(short itemNumber)
 	pushable.DisableW = pushable.DisableE = OCB & 0x200;
 	pushable.DisableN = pushable.DisableS = OCB & 0x400;
 	
-	pushable.Climb = 0; // TODO: Maybe there is a better way to handle this that doesn't involve OCBs?
-	/*
-	pushable.Climb |= (OCB & 0x800) ? CLIMB_WEST : 0;
+	// TODO: Maybe there is a better way to handle this that doesn't involve OCBs.
+	pushable.Climb = 0;
+	/*pushable.Climb |= (OCB & 0x800) ? CLIMB_WEST : 0;
 	pushable.Climb |= (OCB & 0x1000) ? CLIMB_NORTH : 0;
 	pushable.Climb |= (OCB & 0x2000) ? CLIMB_EAST : 0;
-	pushable.Climb |= (OCB & 0x4000) ? CLIMB_SOUTH : 0;
-	*/
+	pushable.Climb |= (OCB & 0x4000) ? CLIMB_SOUTH : 0;*/
+
 	pushable.HasFloorCeiling = false;
 
 	int height;
@@ -146,9 +144,9 @@ void InitialisePushableBlock(short itemNumber)
 	pushable.Height = height;
 
 	// TODO: Lua.
-	pushable.LoopSound = SFX_TR4_PUSHABLE_SOUND;
-	pushable.StopSound = SFX_TR4_PUSH_BLOCK_END;
-	pushable.FallSound = SFX_TR4_BOULDER_FALL;
+	//pushable.LoopSound = SFX_TR4_PUSHABLE_SOUND;
+	//pushable.StopSound = SFX_TR4_PUSH_BLOCK_END;
+	pushable.FallSoundID = SFX_TR4_BOULDER_FALL;
 
 	// Check for stack formation when pushables are initialized.
 	FindStack(itemNumber);
@@ -168,15 +166,6 @@ void PushableBlockControl(short itemNumber)
 
 	int x, z;
 	int blockHeight = GetStackHeight(pushableItem);
-
-	// Do sound effects. It works for now.
-	if (DoPushPull > 0)
-		SoundEffect(pushable.LoopSound, &pushableItem->Pose, SoundEnvironment::Always);
-	else if (DoPushPull < 0)
-	{
-		DoPushPull = 0;
-		SoundEffect(pushable.StopSound, &pushableItem->Pose, SoundEnvironment::Always);
-	}
 
 	// Control falling.
 	if (pushableItem->Animation.IsAirborne)
@@ -199,11 +188,11 @@ void PushableBlockControl(short itemNumber)
 			int relY = floorHeight - pushableItem->Pose.Position.y;
 			pushableItem->Pose.Position.y = floorHeight;
 
-			if (pushableItem->Animation.Velocity.y >= 96)
+			if (pushableItem->Animation.Velocity.y >= 96.0f)
 				FloorShake(pushableItem);
 
-			pushableItem->Animation.Velocity.y = 0;
-			SoundEffect(pushable.FallSound, &pushableItem->Pose, SoundEnvironment::Always);
+			pushableItem->Animation.Velocity.y = 0.0f;
+			SoundEffect(pushable.FallSoundID, &pushableItem->Pose, SoundEnvironment::Always);
 
 			MoveStackY(itemNumber, relY);
 			AddBridgeStack(itemNumber);
@@ -280,19 +269,17 @@ void PushableBlockControl(short itemNumber)
 
 		if (laraItem->Animation.FrameNumber == (g_Level.Anims[laraItem->Animation.AnimNumber].frameEnd - 1))
 		{
-			if (pushable.CanFall) // check if pushable is about to fall
+			// Check if pushable is about to fall.
+			if (pushable.CanFall)
 			{
-				int floorHeight = GetCollision(pushableItem->Pose.Position.x, pushableItem->Pose.Position.y + 10, pushableItem->Pose.Position.z, pushableItem->RoomNumber).Position.Floor;
+				int floorHeight = GetCollision(pushableItem, 0, 0, 10).Position.Floor;
 				if (floorHeight > pushableItem->Pose.Position.y)
 				{
 					pushableItem->Pose.Position.x = pushableItem->Pose.Position.x & 0xFFFFFE00 | 0x200;
 					pushableItem->Pose.Position.z = pushableItem->Pose.Position.z & 0xFFFFFE00 | 0x200;
 					MoveStackXZ(itemNumber);
-					//SoundEffect(pushable.StopSound, &item->pos, SoundEnvironment::Always);
-					DoPushPull = 0;
 					laraItem->Animation.TargetState = LS_IDLE;
-
-					pushableItem->Animation.IsAirborne = true; // do fall
+					pushableItem->Animation.IsAirborne = true;
 					return;
 				}
 			}
@@ -505,12 +492,12 @@ void PushableBlockCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo*
 		PushableBlockBounds.boundingBox.Z1 = bounds->Z1 - 200;
 		PushableBlockBounds.boundingBox.Z2 = 0;
 
-		short rot = pushableItem->Pose.Orientation.y;
+		short yOrient = pushableItem->Pose.Orientation.y;
 		pushableItem->Pose.Orientation.y = (laraItem->Pose.Orientation.y + ANGLE(45.0f)) & 0xC000;
 
 		if (TestLaraPosition(&PushableBlockBounds, pushableItem, laraItem))
 		{
-			unsigned short quadrant = (unsigned short)((pushableItem->Pose.Orientation.y / 0x4000) + ((rot + 0x2000) / 0x4000));
+			int quadrant = GetQuadrant(pushableItem->Pose.Orientation.y);
 			if (quadrant & 1)
 				PushableBlockPos.z = bounds->X1 - 35;
 			else
@@ -521,32 +508,26 @@ void PushableBlockCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo*
 				// For now, don't use auto-align function because it can collide with player's vault.
 				laraItem->Pose.Orientation = pushableItem->Pose.Orientation;
 
-				laraItem->Animation.AnimNumber = LA_PUSHABLE_GRAB;
-				laraItem->Animation.FrameNumber = g_Level.Anims[laraItem->Animation.AnimNumber].frameBase;
-				laraItem->Animation.ActiveState = LS_PUSHABLE_GRAB;
-				laraItem->Animation.TargetState = LS_PUSHABLE_GRAB;
+				SetAnimation(laraItem, LA_PUSHABLE_GRAB);
 				lara->Control.IsMoving = false;
 				lara->Control.HandStatus = HandStatus::Busy;
 				lara->NextCornerPos.Position.x = itemNumber;
-				pushableItem->Pose.Orientation.y = rot;
+				pushableItem->Pose.Orientation.y = yOrient;
 			}
 			else
 			{
 				if (MoveLaraPosition(&PushableBlockPos, pushableItem, laraItem))
 				{
-					laraItem->Animation.AnimNumber = LA_PUSHABLE_GRAB;
-					laraItem->Animation.FrameNumber = g_Level.Anims[laraItem->Animation.AnimNumber].frameBase;
-					laraItem->Animation.ActiveState = LS_PUSHABLE_GRAB;
-					laraItem->Animation.TargetState = LS_PUSHABLE_GRAB;
+					SetAnimation(laraItem, LA_PUSHABLE_GRAB);
 					lara->Control.IsMoving = false;
 					lara->Control.HandStatus = HandStatus::Busy;
 					lara->NextCornerPos.Position.x = itemNumber;
-					pushableItem->Pose.Orientation.y = rot;
+					pushableItem->Pose.Orientation.y = yOrient;
 				}
 				else
 				{
 					lara->InteractedItem = itemNumber;
-					pushableItem->Pose.Orientation.y = rot;
+					pushableItem->Pose.Orientation.y = yOrient;
 				}
 			}
 		}
@@ -558,22 +539,9 @@ void PushableBlockCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo*
 				lara->Control.HandStatus = HandStatus::Free;
 			}
 
-			pushableItem->Pose.Orientation.y = rot;
+			pushableItem->Pose.Orientation.y = yOrient;
 		}
 	}
-}
-
-// TODO: Do Flipeffect 18 in anims.
-void PushLoop(ItemInfo* item)
-{
-	DoPushPull = 1;
-}
-
-// TODO: Do Flipeffect 19 in anims.
-void PushEnd(ItemInfo* item)
-{
-	if (DoPushPull == 1)
-		DoPushPull = -1;
 }
 
 bool TestBlockMovable(ItemInfo* item, int blockHeight)
