@@ -2,6 +2,9 @@ Version 1.0.3
 =============
 
 * Fix dodgy weapon lock angle constraints.
+* Fix position of player alignment to pushable objects.
+* Fix pushable object scrape sounds not playing.
+* Speed up pushable object grab and ungrab animations.
 
 
 Version 1.0.2

@@ -207,7 +207,7 @@ void PushableBlockControl(short itemNumber)
 			if (pushable.HasFloorCeiling)
 			{
 				//AlterFloorHeight(item, -((item->triggerFlags - 64) * 256));
-				AdjustStopperFlag(pushableItem, pushableItem->ItemFlags[0] + 0x8000, false);
+				AdjustStopperFlag(pushableItem, pushableItem->ItemFlags[0] + ANGLE(90.0f), false);
 			}
 		}
 
@@ -391,7 +391,7 @@ void PushableBlockControl(short itemNumber)
 			if (pushable.HasFloorCeiling)
 			{
 				//AlterFloorHeight(item, -((item->triggerFlags - 64) * 256));
-				AdjustStopperFlag(pushableItem, pushableItem->ItemFlags[0] + 0x8000, false);
+				AdjustStopperFlag(pushableItem, pushableItem->ItemFlags[0] + ANGLE(90.0f), false);
 			}
 		}
 
@@ -408,16 +408,16 @@ void PushableBlockCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo*
 	int blockHeight = GetStackHeight(pushableItem);
 	
 	if ((!(TrInput & IN_ACTION) ||
+		pushableItem->Status == ITEM_INVISIBLE ||
+		pushableItem->TriggerFlags < 0 ||
 		laraItem->Animation.ActiveState != LS_IDLE ||
 		laraItem->Animation.AnimNumber != LA_STAND_IDLE ||
 		laraItem->Animation.IsAirborne ||
-		lara->Control.HandStatus != HandStatus::Free ||
-		pushableItem->Status == ITEM_INVISIBLE ||
-		pushableItem->TriggerFlags < 0) &&
+		lara->Control.HandStatus != HandStatus::Free) &&
 		(!lara->Control.IsMoving || lara->InteractedItem != itemNumber))
 	{
 		if ((laraItem->Animation.ActiveState != LS_PUSHABLE_GRAB ||
-			(laraItem->Animation.FrameNumber != g_Level.Anims[LA_PUSHABLE_GRAB].frameBase + 19) ||
+			(laraItem->Animation.FrameNumber != g_Level.Anims[LA_PUSHABLE_GRAB].frameEnd) ||
 			lara->NextCornerPos.Position.x != itemNumber))
 		{
 			if (!pushable.HasFloorCeiling)
@@ -426,20 +426,22 @@ void PushableBlockCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo*
 			return;
 		}
 
-		short quadrant = (unsigned short)(laraItem->Pose.Orientation.y + ANGLE(45.0f)) / ANGLE(90.0f);
-
 		bool isQuadrantDisabled = false;
+		short quadrant = GetQuadrant(laraItem->Pose.Orientation.y);
 		switch (quadrant)
 		{
 		case NORTH:
 			isQuadrantDisabled = pushable.DisableN;
 			break;
+
 		case EAST:
 			isQuadrantDisabled = pushable.DisableE;
 			break;
+
 		case SOUTH:
 			isQuadrantDisabled = pushable.DisableS;
 			break;
+
 		case WEST:
 			isQuadrantDisabled = pushable.DisableW;
 			break;
@@ -499,9 +501,9 @@ void PushableBlockCollision(short itemNumber, ItemInfo* laraItem, CollisionInfo*
 		{
 			int quadrant = GetQuadrant(pushableItem->Pose.Orientation.y);
 			if (quadrant & 1)
-				PushableBlockPos.z = bounds->X1 - 35;
+				PushableBlockPos.z = bounds->X1 - CLICK(0.4f);
 			else
-				PushableBlockPos.z = bounds->Z1 - 35;
+				PushableBlockPos.z = bounds->Z1 - CLICK(0.4f);
 
 			if (pushable.HasFloorCeiling)
 			{					
@@ -594,7 +596,9 @@ bool TestBlockPush(ItemInfo* item, int blockHeight, unsigned short quadrant)
 
 	if (collPoint.Position.FloorSlope || collPoint.Position.DiagonalStep ||
 		collPoint.Block->FloorSlope(0) != Vector2::Zero || collPoint.Block->FloorSlope(1) != Vector2::Zero)
+	{
 		return false;
+	}
 
 	if (pushable.CanFall)
 	{
