@@ -144,8 +144,6 @@ void InitialisePushableBlock(short itemNumber)
 	pushable.Height = height;
 
 	// TODO: Lua.
-	//pushable.LoopSound = SFX_TR4_PUSHABLE_SOUND;
-	//pushable.StopSound = SFX_TR4_PUSH_BLOCK_END;
 	pushable.FallSoundID = SFX_TR4_BOULDER_FALL;
 
 	// Check for stack formation when pushables are initialized.

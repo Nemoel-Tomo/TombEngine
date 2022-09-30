@@ -3,6 +3,7 @@
 
 #include <filesystem>
 #include <regex>
+
 #include "Game/camera.h"
 #include "Game/collision/collide_room.h"
 #include "Game/Lara/lara.h"
@@ -18,8 +19,8 @@ SoundTrackSlot BASS_Soundtrack[(int)SoundTrackType::Count];
 HSAMPLE SamplePointer[SOUND_MAX_SAMPLES];
 SoundEffectSlot SoundSlot[SOUND_MAX_CHANNELS];
 
-const BASS_BFX_FREEVERB BASS_ReverbTypes[(int)ReverbType::Count] =    // Reverb presets
-
+// Reverb presets
+const BASS_BFX_FREEVERB BASS_ReverbTypes[(int)ReverbType::Count] =
 { // Dry Mix | Wet Mix |  Size   |  Damp   |  Width  |  Mode  | Channel
   {  1.0f,     0.20f,     0.05f,    0.90f,    0.7f,     0,      -1     },	// 0 = Outside
   {  1.0f,     0.20f,     0.35f,    0.15f,    0.8f,     0,      -1     },	// 1 = Small room
@@ -42,16 +43,13 @@ static int GlobalFXVolume;
 void SetVolumeMusic(int vol) 
 {
 	GlobalMusicVolume = vol;
-
 	float fVol = static_cast<float>(vol) / 100.0f;
+
 	if (BASS_ChannelIsActive(BASS_Soundtrack[(int)SoundTrackType::BGM].Channel))
-	{
 		BASS_ChannelSetAttribute(BASS_Soundtrack[(int)SoundTrackType::BGM].Channel, BASS_ATTRIB_VOL, fVol);
-	}
+	
 	if (BASS_ChannelIsActive(BASS_Soundtrack[(int)SoundTrackType::OneShot].Channel))
-	{
 		BASS_ChannelSetAttribute(BASS_Soundtrack[(int)SoundTrackType::OneShot].Channel, BASS_ATTRIB_VOL, fVol);
-	}
 }
 
 void SetVolumeFX(int vol)
@@ -73,7 +71,7 @@ bool LoadSample(char *pointer, int compSize, int uncompSize, int index)
 		return 0;
 	}
 
-	// Load and uncompress sample to 32-bit float format
+	// Load and uncompress sample to 32-bit float format.
 	HSAMPLE sample = BASS_SampleLoad(true, pointer, 0, compSize, 1, SOUND_SAMPLE_FLAGS);
 
 	if (!sample)
@@ -82,13 +80,13 @@ bool LoadSample(char *pointer, int compSize, int uncompSize, int index)
 		return false;
 	}
 
-	// Paranoid (c) TeslaRus
-	// Try to free sample before allocating new one
+	// Paranoid (c) TeslaRus.
+	// Try to free sample before allocating new one.
 	Sound_FreeSample(index);
 
 	BASS_SAMPLE info;
 	BASS_SampleGetInfo(sample, &info);
-	int finalLength = info.length + 44;	// uncompSize is invalid after 16->32 bit conversion
+	int finalLength = info.length + 44;	// uncompSize is invalid after 16->32 bit conversion.
 
 	if (info.freq != 22050 || info.chans != 1)
 	{
@@ -116,7 +114,7 @@ bool LoadSample(char *pointer, int compSize, int uncompSize, int index)
 	BASS_SampleGetData(sample, uncompBuffer + 44);
 	BASS_SampleFree(sample);
 
-	// Cut off trailing silence from samples to prevent gaps in looped playback
+	// Cut off trailing silence from samples to prevent gaps in looped playback.
 	int cleanLength = info.length;
 	for (DWORD i = 4; i < info.length; i += 4)
 	{
@@ -129,18 +127,18 @@ bool LoadSample(char *pointer, int compSize, int uncompSize, int index)
 		}
 	}
 
-	// Put data size to header
+	// Put data size to header.
 	*(DWORD*)(uncompBuffer + 4) = cleanLength + 44 - 8;
 	*(DWORD*)(uncompBuffer + 40) = cleanLength;
 
-	// Create actual sample
+	// Create actual sample.
 	SamplePointer[index] = BASS_SampleLoad(true, uncompBuffer, 0, cleanLength + 44, 65535, SOUND_SAMPLE_FLAGS | BASS_SAMPLE_3D);
 	delete uncompBuffer;
 
 	return true;
 }
 
-bool SoundEffect(int effectID, PHD_3DPOS* position, SoundEnvironment condition, float pitchMultiplier, float gainMultiplier)
+bool SoundEffect(int effectID, PHD_3DPOS* pose, SoundEnvironment condition, float pitchMultiplier, float gainMultiplier)
 {
 	if (!g_Configuration.EnableSound)
 		return false;
@@ -153,7 +151,7 @@ bool SoundEffect(int effectID, PHD_3DPOS* position, SoundEnvironment condition, 
 
 	if (condition != SoundEnvironment::Always)
 	{
-		// Get current camera room's environment
+		// Get current camera room's environment.
 		auto cameraCondition = TestEnvironment(ENV_FLAG_WATER, Camera.pos.roomNumber) ? SoundEnvironment::Water : SoundEnvironment::Land;
 
 		// Don't play effect if effect's environment isn't the same as camera position's environment
@@ -161,11 +159,11 @@ bool SoundEffect(int effectID, PHD_3DPOS* position, SoundEnvironment condition, 
 			return false;
 	}
 
-	// Get actual sample index from SoundMap
+	// Get actual sample index from SoundMap.
 	int sampleIndex = g_Level.SoundMap[effectID];
 
 	// -1 means no such effect exists in level file.
-	// We set it to -2 afterwards to prevent further debug message firings.
+	// Set it to -2 afterwards to prevent further debug message firings.
 	if (sampleIndex == -1)
 	{
 		TENLog("Non present effect: " + std::to_string(effectID), LogLevel::Warning);
@@ -190,11 +188,11 @@ bool SoundEffect(int effectID, PHD_3DPOS* position, SoundEnvironment condition, 
 	if ((sampleInfo->Randomness) && ((GetRandomControl() & UCHAR_MAX) > sampleInfo->Randomness))
 		return false;
 
-	// Apply 3D attrib only to sound with position property
-	if (position)
+	// Apply 3D attributes only to sound with position property.
+	if (pose)
 		sampleFlags |= BASS_SAMPLE_3D;
 
-	// Set & randomize volume (if needed)
+	// Set and randomize volume (if needed).
 	float gain = (static_cast<float>(sampleInfo->Volume) / UCHAR_MAX) * std::clamp(gainMultiplier, SOUND_MIN_PARAM_MULTIPLIER, SOUND_MAX_PARAM_MULTIPLIER);;
 	if ((sampleInfo->Flags & SOUND_FLAG_RND_GAIN))
 		gain -= (static_cast<float>(GetRandomControl()) / static_cast<float>(RAND_MAX))* SOUND_MAX_GAIN_CHANGE;
@@ -202,13 +200,13 @@ bool SoundEffect(int effectID, PHD_3DPOS* position, SoundEnvironment condition, 
 	// Set and randomize pitch and additionally multiply by provided value (for vehicles etc)
 	float pitch = (1.0f + static_cast<float>(sampleInfo->Pitch) / 127.0f) * std::clamp(pitchMultiplier, SOUND_MIN_PARAM_MULTIPLIER, SOUND_MAX_PARAM_MULTIPLIER);
 
-	// Randomize pitch (if needed)
+	// Randomize pitch (if needed).
 	if ((sampleInfo->Flags & SOUND_FLAG_RND_PITCH))
 		pitch += ((static_cast<float>(GetRandomControl()) / static_cast<float>(RAND_MAX)) - 0.5f) * SOUND_MAX_PITCH_CHANGE * 2.0f;
 
-	// Calculate sound radius and distance to sound
+	// Calculate sound radius and distance to sound.
 	float radius = (float)(sampleInfo->Radius) * SECTOR(1);
-	float distance = Sound_DistanceToListener(position);
+	float distance = Sound_DistanceToListener(pose);
 
 	// Don't play sound if it's too far from listener's position.
 	if (distance > radius)
@@ -218,9 +216,9 @@ bool SoundEffect(int effectID, PHD_3DPOS* position, SoundEnvironment condition, 
 	float volume = Sound_Attenuate(gain, distance, radius);
 
 	// Get existing index, if any, of sound which is playing.
-	int existingChannel = Sound_EffectIsPlaying(effectID, position);
+	int existingChannel = Sound_EffectIsPlaying(effectID, pose);
 
-	// Select behaviour based on effect playback type (bytes 0-1 of flags field)
+	// Select behaviour based on effect playback type (bytes 0-1 of flags field).
 	auto playType = (SoundPlayMode)(sampleInfo->Flags & 3);
 	switch (playType)
 	{
@@ -228,27 +226,33 @@ bool SoundEffect(int effectID, PHD_3DPOS* position, SoundEnvironment condition, 
 		break;
 
 	case SoundPlayMode::Wait:
-		if (existingChannel != -1) // Don't play until stopped
+		// Don't play until stopped.
+		if (existingChannel != -1)
 			return false;
+
 		break;
 
 	case SoundPlayMode::Restart:
-		if (existingChannel != -1) // Stop existing and continue
+		// Stop existing and continue.
+		if (existingChannel != -1)
 			Sound_FreeSlot(existingChannel, SOUND_XFADETIME_CUTSOUND); 
+
 		break;
 
 	case SoundPlayMode::Looped:
-		if (existingChannel != -1) // Just update parameters and return, if already playing
+		// Just update parameters and return if already playing.
+		if (existingChannel != -1)
 		{
-			Sound_UpdateEffectPosition(existingChannel, position);
+			Sound_UpdateEffectPosition(existingChannel, pose);
 			Sound_UpdateEffectAttributes(existingChannel, pitch, volume);
 			return false;
 		}
+
 		sampleFlags |= BASS_SAMPLE_LOOP;
 		break;
 	}
 
-	// Randomly select arbitrary sample from the list, if more than one is present
+	// Randomly select arbitrary sample from the list if more than one is present.
 	int sampleToPlay = 0;
 	int numSamples = (sampleInfo->Flags >> 2) & 15;
 	if (numSamples == 1)
@@ -256,7 +260,7 @@ bool SoundEffect(int effectID, PHD_3DPOS* position, SoundEnvironment condition, 
 	else
 		sampleToPlay = sampleInfo->Number + (int)((GetRandomControl() * numSamples) >> 15);
 
-	// Get free channel to play sample
+	// Get free channel to play sample.
 	int freeSlot = Sound_GetFreeSlot();
 	if (freeSlot == -1)
 	{
@@ -270,29 +274,29 @@ bool SoundEffect(int effectID, PHD_3DPOS* position, SoundEnvironment condition, 
 	if (Sound_CheckBASSError("Trying to create channel for sample %d", false, sampleToPlay))
 		return false;
 
-	// Finally ready to play sound, assign it to sound slot.
+	// Finally ready to play sound; assign it to sound slot.
 	SoundSlot[freeSlot].State = SoundState::Idle;
 	SoundSlot[freeSlot].EffectID = effectID;
 	SoundSlot[freeSlot].Channel = channel;
 	SoundSlot[freeSlot].Gain = gain;
-	SoundSlot[freeSlot].Origin = position ? Vector3(position->Position.x, position->Position.y, position->Position.z) : SOUND_OMNIPRESENT_ORIGIN;
+	SoundSlot[freeSlot].Origin = pose ? Vector3(pose->Position.x, pose->Position.y, pose->Position.z) : SOUND_OMNIPRESENT_ORIGIN;
 
 	if (Sound_CheckBASSError("Applying pitch/gain attribs on channel %x, sample %d", false, channel, sampleToPlay))
 		return false;
 
-	// Set looped flag, if necessary
+	// Set looped flag if necessary.
 	if (playType == SoundPlayMode::Looped)
 		BASS_ChannelFlags(channel, BASS_SAMPLE_LOOP, BASS_SAMPLE_LOOP);
 
-	// Play channel
+	// Play channel.
 	BASS_ChannelPlay(channel, false);
 
 	if (Sound_CheckBASSError("Queuing channel %x on sample mixer", false, freeSlot))
 		return false;
 
-	// Set attributes
-	BASS_ChannelSet3DAttributes(channel, position ? BASS_3DMODE_NORMAL : BASS_3DMODE_OFF, SOUND_MAXVOL_RADIUS, radius, 360, 360, 0.0f);
-	Sound_UpdateEffectPosition(freeSlot, position, true);
+	// Set attributes.
+	BASS_ChannelSet3DAttributes(channel, pose ? BASS_3DMODE_NORMAL : BASS_3DMODE_OFF, SOUND_MAXVOL_RADIUS, radius, 360, 360, 0.0f);
+	Sound_UpdateEffectPosition(freeSlot, pose, true);
 	Sound_UpdateEffectAttributes(freeSlot, pitch, volume);
 
 	if (Sound_CheckBASSError("Applying 3D attribs on channel %x, sound %d", false, channel, effectID))
