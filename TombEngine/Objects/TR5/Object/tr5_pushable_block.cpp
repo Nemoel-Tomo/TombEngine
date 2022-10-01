@@ -99,7 +99,9 @@ void ClearMovableBlockSplitters(int x, int y, int z, short roomNumber)
 void InitialisePushableBlock(short itemNumber)
 {
 	auto* item = &g_Level.Items[itemNumber];
-	item->ItemFlags[1] = NO_ITEM; // Need to use itemFlags[1] to hold linked index for now.
+
+	// TODO: Use itemFlags[1] to hold linked index for now.
+	item->ItemFlags[1] = NO_ITEM;
 	
 	// Allocate new pushable info.
 	item->Data = PushableInfo();
@@ -162,7 +164,6 @@ void PushableBlockControl(short itemNumber)
 	auto pos = Vector3Int::Zero;
 	short quadrant = GetQuadrant(laraItem->Pose.Orientation.y);
 
-	int x, z;
 	int blockHeight = GetStackHeight(pushableItem);
 
 	// Control falling.
@@ -214,6 +215,9 @@ void PushableBlockControl(short itemNumber)
 
 	// Move pushable based on bbox->Z2 of lara->Z2.
 	int displaceBox = GetBoundsAccurate(laraItem)->Z2 - 80;
+
+	int x = 0;
+	int z = 0;
 
 	switch (laraItem->Animation.AnimNumber)
 	{
