@@ -43,7 +43,7 @@
 #include "tr5_smoke_emitter.h"
 
 // Objects
-#include "Objects/TR5/Object/tr5_pushableblock.h"
+#include "Objects/TR5/Object/tr5_pushable_block.h"
 #include "tr5_twoblockplatform.h"
 #include "tr5_raisingcog.h"
 #include "tr5_raisingblock.h"

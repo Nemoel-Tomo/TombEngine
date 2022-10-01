@@ -6,7 +6,7 @@
 #include "Objects/Generic/puzzles_keys.h"
 #include "Specific/level.h"
 
-#include "Objects/TR5/Object/tr5_pushableblock.h"
+#include "Objects/TR5/Object/tr5_pushable_block.h"
 
 using std::function;
 

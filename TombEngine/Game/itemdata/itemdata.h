@@ -19,7 +19,7 @@
 #include "Objects/TR4/Vehicles/jeep_info.h"
 #include "Objects/TR4/Vehicles/motorbike_info.h"
 #include "Objects/TR5/Entity/tr5_laserhead_info.h"
-#include "Objects/TR5/Object/tr5_pushableblock_info.h"
+#include "Objects/TR5/Object/tr5_pushable_block_info.h"
 #include "Specific/phd_global.h"
 
 template<class... Ts> struct visitor : Ts... { using Ts::operator()...; };

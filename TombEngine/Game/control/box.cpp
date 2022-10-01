@@ -17,7 +17,7 @@
 #include "Specific/setup.h"
 #include "Specific/trmath.h"
 #include "Objects/objectslist.h"
-#include "Objects/TR5/Object/tr5_pushableblock.h"
+#include "Objects/TR5/Object/tr5_pushable_block.h"
 #include "Renderer/Renderer11.h"
 
 #define CHECK_CLICK(x) CLICK(x) / 2

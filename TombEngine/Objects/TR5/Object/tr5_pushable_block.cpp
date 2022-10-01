@@ -1,5 +1,5 @@
 #include "framework.h"
-#include "Objects/TR5/Object/tr5_pushableblock.h"
+#include "Objects/TR5/Object/tr5_pushable_block.h"
 
 #include "Game/animation.h"
 #include "Game/collision/collide_item.h"
@@ -9,7 +9,7 @@
 #include "Game/items.h"
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_helpers.h"
-#include "Objects/TR5/Object/tr5_pushableblock_info.h"
+#include "Objects/TR5/Object/tr5_pushable_block_info.h"
 #include "Sound/sound.h"
 #include "Specific/input.h"
 #include "Specific/level.h"
