@@ -40,7 +40,7 @@ PushableInfo& GetPushableInfo(ItemInfo* item)
 
 void ClearMovableBlockSplitters(int x, int y, int z, short roomNumber)
 {
-	FloorInfo* floor = GetFloor(x, y, z, &roomNumber);
+	auto* floor = GetFloor(x, y, z, &roomNumber);
 	if (floor->Box == NO_BOX)
 		return;
 
@@ -98,13 +98,13 @@ void ClearMovableBlockSplitters(int x, int y, int z, short roomNumber)
 
 void InitialisePushableBlock(short itemNumber)
 {
-	auto* item = &g_Level.Items[itemNumber];
+	auto& item = g_Level.Items[itemNumber];
 
 	// TODO: Use itemFlags[1] to hold linked index for now.
-	item->ItemFlags[1] = NO_ITEM;
+	item.ItemFlags[1] = NO_ITEM;
 	
 	// Allocate new pushable info.
-	item->Data = PushableInfo();
+	item.Data = PushableInfo();
 	auto& pushable = GetPushableInfo(item);
 	
 	// TODO: Lua.
@@ -112,11 +112,11 @@ void InitialisePushableBlock(short itemNumber)
 	pushable.Gravity = 8;
 	pushable.Weight = 100;
 
-	pushable.MoveX = item->Pose.Position.x;
-	pushable.MoveZ = item->Pose.Position.z;
+	pushable.MoveX = item.Pose.Position.x;
+	pushable.MoveZ = item.Pose.Position.z;
 
 	// Read flags from OCB.
-	int OCB = item->TriggerFlags;
+	int OCB = item.TriggerFlags;
 
 	pushable.CanFall = OCB & 0x20;
 	pushable.DisablePull = OCB & 0x80;
@@ -141,7 +141,7 @@ void InitialisePushableBlock(short itemNumber)
 		height = (OCB & 0x1F) * CLICK(1);
 	}
 	else
-		height = -GetBoundsAccurate(item)->Y1;
+		height = -GetBoundsAccurate(&item)->Y1;
 
 	pushable.Height = height;
 
@@ -590,30 +590,30 @@ bool TestBlockPush(ItemInfo* item, int blockHeight, unsigned short quadrant)
 		break;
 	}
 
-	auto collPoint = GetCollision(x, y - blockHeight, z, item->RoomNumber);
+	auto pointColl = GetCollision(x, y - blockHeight, z, item->RoomNumber);
 
-	auto* room = &g_Level.Rooms[collPoint.RoomNumber];
+	auto* room = &g_Level.Rooms[pointColl.RoomNumber];
 	if (GetSector(room, x - room->x, z - room->z)->Stopper)
 		return false;
 
-	if (collPoint.Position.FloorSlope || collPoint.Position.DiagonalStep ||
-		collPoint.Block->FloorSlope(0) != Vector2::Zero || collPoint.Block->FloorSlope(1) != Vector2::Zero)
+	if (pointColl.Position.FloorSlope || pointColl.Position.DiagonalStep ||
+		pointColl.Block->FloorSlope(0) != Vector2::Zero || pointColl.Block->FloorSlope(1) != Vector2::Zero)
 	{
 		return false;
 	}
 
 	if (pushable.CanFall)
 	{
-		if (collPoint.Position.Floor < y)
+		if (pointColl.Position.Floor < y)
 			return false;
 	}
 	else
 	{
-		if (collPoint.Position.Floor != y)
+		if (pointColl.Position.Floor != y)
 			return false;
 	}
 
-	int ceiling = y - blockHeight + 100;
+	int ceiling = (y - blockHeight) + 100;
 
 	if (GetCollision(x, ceiling, z, item->RoomNumber).Position.Ceiling > ceiling)
 		return false;
@@ -683,16 +683,16 @@ bool TestBlockPull(ItemInfo* pushableItem, int blockHeight, short quadrant)
 	if (GetSector(room, x - room->x, z - room->z)->Stopper)
 		return false;
 
-	auto collPoint = GetCollision(x, y - blockHeight, z, pushableItem->RoomNumber);
+	auto pointColl = GetCollision(x, y - blockHeight, z, pushableItem->RoomNumber);
 
-	if (collPoint.Position.Floor != y)
+	if (pointColl.Position.Floor != y)
 		return false;
 
-	if (collPoint.Position.FloorSlope || collPoint.Position.DiagonalStep ||
-		collPoint.Block->FloorSlope(0) != Vector2::Zero || collPoint.Block->FloorSlope(1) != Vector2::Zero)
+	if (pointColl.Position.FloorSlope || pointColl.Position.DiagonalStep ||
+		pointColl.Block->FloorSlope(0) != Vector2::Zero || pointColl.Block->FloorSlope(1) != Vector2::Zero)
 		return false;
 
-	int ceiling = y - blockHeight + 100;
+	int ceiling = (y - blockHeight) + 100;
 
 	if (GetCollision(x, ceiling, z, pushableItem->RoomNumber).Position.Ceiling > ceiling)
 		return false;
@@ -745,16 +745,16 @@ bool TestBlockPull(ItemInfo* pushableItem, int blockHeight, short quadrant)
 
 	roomNumber = laraItem->RoomNumber;
 
-	collPoint = GetCollision(x, y - LARA_HEIGHT, z, laraItem->RoomNumber);
+	pointColl = GetCollision(x, y - LARA_HEIGHT, z, laraItem->RoomNumber);
 
 	room = &g_Level.Rooms[roomNumber];
 	if (GetSector(room, x - room->x, z - room->z)->Stopper)
 		return false;
 
-	if (collPoint.Position.Floor != y)
+	if (pointColl.Position.Floor != y)
 		return false;
 
-	if (collPoint.Block->CeilingHeight(x, z) > y - LARA_HEIGHT)
+	if (pointColl.Block->CeilingHeight(x, z) > y - LARA_HEIGHT)
 		return false;
 
 	prevX = laraItem->Pose.Position.x;
@@ -1000,7 +1000,7 @@ int PushableBlockFloorBorder(short itemNumber)
 {
 	const auto& item = g_Level.Items[itemNumber];
 
-	int height = item.Pose.Position.y - (item.TriggerFlags & 0x1F) * CLICK(1);
+	int height = item.Pose.Position.y - ((item.TriggerFlags & 0x1F) * CLICK(1));
 	return height;
 }
 
