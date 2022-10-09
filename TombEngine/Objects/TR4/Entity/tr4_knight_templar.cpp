@@ -24,12 +24,12 @@ namespace TEN::Entities::TR4
 	#define KTEMPLAR_IDLE_TURN_RATE_MAX ANGLE(2.0f)
 	#define KTEMPLAR_WALK_TURN_RATE_MAX ANGLE(7.0f)
 
-	const vector<int> KnightTemplarSwordAttackJoints = { 10, 11 };
 	const auto KnightTemplarBite = BiteInfo(Vector3::Zero, 11);
+	const vector<int> KnightTemplarSwordAttackJoints = { 10, 11 };
 
 	enum KnightTemplarState
 	{
-		KTEMPLAR_STATE_NONE = 0,
+		// No state 0.
 		KTEMPLAR_STATE_IDLE = 1,
 		KTEMPLAR_STATE_WALK_FORWARD = 2,
 		KTEMPLAR_STATE_SWORD_ATTACK_1 = 3,
@@ -62,10 +62,7 @@ namespace TEN::Entities::TR4
 		auto* item = &g_Level.Items[itemNumber];
 
 		ClearItem(itemNumber);
-		item->Animation.AnimNumber = Objects[ID_KNIGHT_TEMPLAR].animIndex + KTEMPLAR_ANIM_IDLE;
-		item->Animation.TargetState = KTEMPLAR_STATE_IDLE;
-		item->Animation.ActiveState = KTEMPLAR_STATE_IDLE;
-		item->Animation.FrameNumber = g_Level.Anims[item->Animation.AnimNumber].frameBase;
+		SetAnimation(item, KTEMPLAR_ANIM_IDLE);
 		item->MeshBits &= 0xF7FF;
 	}
 
@@ -75,8 +72,14 @@ namespace TEN::Entities::TR4
 			return;
 
 		auto* item = &g_Level.Items[itemNumber];
-		auto* creature = GetCreatureInfo(item);
 		auto* object = &Objects[item->ObjectNumber];
+		auto* creature = GetCreatureInfo(item);
+
+		short angle = 0;
+		short tilt = 0;
+		short joint0 = 0;
+		short joint1 = 0;
+		short joint2 = 0;
 
 		if (item->Animation.AnimNumber == object->animIndex ||
 			(item->Animation.AnimNumber - object->animIndex) == KTEMPLAR_ANIM_WALK_FORWARD_RIGHT_1 ||
@@ -91,12 +94,6 @@ namespace TEN::Entities::TR4
 				TriggerMetalSparks(pos.x, pos.y, pos.z, (GetRandomControl() & 0x1FF) - 256, -128 - (GetRandomControl() & 0x7F), (GetRandomControl() & 0x1FF) - 256, 0);
 			}
 		}
-
-		short tilt = 0;
-		short angle = 0;
-		short joint0 = 0;
-		short joint1 = 0;
-		short joint2 = 0;
 
 		// Knight is immortal.
 		if (item->HitPoints < object->HitPoints)
@@ -135,7 +132,7 @@ namespace TEN::Entities::TR4
 		case KTEMPLAR_STATE_IDLE:
 			item->Animation.TargetState = KTEMPLAR_STATE_WALK_FORWARD;
 			creature->MaxTurn = KTEMPLAR_IDLE_TURN_RATE_MAX;
-			creature->Flags = NULL;
+			creature->Flags = 0;
 
 			if (AI.distance > pow(SECTOR(0.67f), 2))
 			{
@@ -198,7 +195,6 @@ namespace TEN::Entities::TR4
 							ShatterObject(nullptr, mesh, -64, LaraItem->RoomNumber, 0);
 							SoundEffect(SFX_TR4_SMASH_ROCK, &item->Pose);
 
-							mesh->flags &= ~StaticMeshFlags::SM_VISIBLE;
 							currentFloor->Stopper = false;
 
 							TestTriggers(pos.x, pos.y, pos.z, item->RoomNumber, true);

@@ -10,9 +10,9 @@
 #include "Sound/sound.h"
 #include "Game/itemdata/creature_info.h"
 
-namespace TEN::Entities::TR5
+namespace TEN::Entities::Creatures::TR5
 {
-	BiteInfo InvisibleGhostBite = { 0, 0, 0, 17 };
+	const auto InvisibleGhostBite = BiteInfo(Vector3::Zero, 17);
 
 	void InitialiseInvisibleGhost(short itemNumber)
 	{
@@ -87,7 +87,7 @@ namespace TEN::Entities::TR5
 			item->Animation.FrameNumber > g_Level.Anims[item->Animation.AnimNumber].frameBase + 18)
 		{
 			DoDamage(creature->Enemy, 400);
-			CreatureEffect2(item, &InvisibleGhostBite, 10, item->Pose.Orientation.y, DoBloodSplat);
+			CreatureEffect2(item, InvisibleGhostBite, 10, item->Pose.Orientation.y, DoBloodSplat);
 			creature->Flags = 1;
 		}
 

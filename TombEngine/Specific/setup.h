@@ -1,12 +1,12 @@
 #pragma once
 #include "Objects/objectslist.h"
-#include "Specific/phd_global.h"
-#include "Specific/level.h"
 #include "Renderer/Renderer11Enums.h"
+#include "Specific/level.h"
+#include "Specific/phd_global.h"
 
-struct ItemInfo;
+enum class ZoneType;
 struct CollisionInfo;
-enum ZoneTypeAttribute;
+struct ItemInfo;
 
 constexpr auto DEFAULT_RADIUS = 10;
 constexpr auto ROT_X = 0x0004;
@@ -44,7 +44,7 @@ struct ObjectInfo
 	std::function<int(short itemNumber)> ceilingBorder;
 	std::function<void(ItemInfo* item)> drawRoutine;
 	std::function<void(short itemNumber, ItemInfo* laraItem, CollisionInfo* coll)> collision;
-	ZoneTypeAttribute zoneType;
+	ZoneType ZoneType;
 	int animIndex; 
 	short HitPoints; 
 	short pivotLength; 
@@ -90,8 +90,8 @@ struct STATIC_INFO
 #define MAX_STATICS 1000
 constexpr auto SF_NO_COLLISION = 0x01;
 constexpr auto SF_SHATTERABLE = 0x02;
-constexpr auto GRAVITY = 6;
-constexpr auto SWAMP_GRAVITY = GRAVITY / 3;
+constexpr auto GRAVITY = 6.0f;
+constexpr auto SWAMP_GRAVITY = GRAVITY / 3.0f;
 
 extern ObjectInfo Objects[ID_NUMBER_OBJECTS];
 extern STATIC_INFO StaticObjects[MAX_STATICS];

@@ -179,8 +179,8 @@ bool TestLaraHang(ItemInfo* item, CollisionInfo* coll)
 			SetAnimation(item, LA_FALL_START);
 			item->Pose.Position.y += CLICK(1);
 			item->Animation.IsAirborne = true;
-			item->Animation.Velocity = 2;
-			item->Animation.VerticalVelocity = 1;
+			item->Animation.Velocity.z = 2;
+			item->Animation.Velocity.y = 1;
 			lara->Control.HandStatus = HandStatus::Free;
 		}
 	}
@@ -225,7 +225,7 @@ bool TestLaraHang(ItemInfo* item, CollisionInfo* coll)
 				coll->Middle.Ceiling < 0 && coll->CollisionType == CT_FRONT && !coll->HitStatic &&
 				abs(verticalShift) < SLOPE_DIFFERENCE && TestValidLedgeAngle(item, coll))
 			{
-				if (item->Animation.Velocity != 0)
+				if (item->Animation.Velocity.z != 0)
 					SnapItemToLedge(item, coll);
 
 				item->Pose.Position.y += verticalShift;
@@ -250,8 +250,8 @@ bool TestLaraHang(ItemInfo* item, CollisionInfo* coll)
 			item->Pose.Position.y += GetBoundsAccurate(item)->Y2 * 1.8f;
 			item->Pose.Position.z += coll->Shift.z;
 			item->Animation.IsAirborne = true;
-			item->Animation.Velocity = 2;
-			item->Animation.VerticalVelocity = 1;
+			item->Animation.Velocity.z = 2;
+			item->Animation.Velocity.y = 1;
 			lara->Control.HandStatus = HandStatus::Free;
 		}
 	}
@@ -270,8 +270,8 @@ bool TestLaraHangJump(ItemInfo* item, CollisionInfo* coll)
 	{
 		SetAnimation(item, LA_REACH_TO_MONKEY);
 		ResetLaraFlex(item);
-		item->Animation.Velocity = 0;
-		item->Animation.VerticalVelocity = 0;
+		item->Animation.Velocity.z = 0;
+		item->Animation.Velocity.y = 0;
 		item->Animation.IsAirborne = false;
 		item->Pose.Position.y += coll->Middle.Ceiling + (LARA_HEIGHT_MONKEY - coll->Setup.Height);
 		lara->Control.HandStatus = HandStatus::Busy;
@@ -320,8 +320,8 @@ bool TestLaraHangJump(ItemInfo* item, CollisionInfo* coll)
 		SnapItemToLedge(item, coll, 0.2f);
 
 	item->Animation.IsAirborne = true;
-	item->Animation.Velocity = 2;
-	item->Animation.VerticalVelocity = 1;
+	item->Animation.Velocity.z = 2;
+	item->Animation.Velocity.y = 1;
 	lara->Control.TurnRate = 0;
 	lara->Control.HandStatus = HandStatus::Busy;
 	return true;
@@ -337,8 +337,8 @@ bool TestLaraHangJumpUp(ItemInfo* item, CollisionInfo* coll)
 	if (TestLaraMonkeyGrab(item, coll))
 	{
 		SetAnimation(item, LA_JUMP_UP_TO_MONKEY);
-		item->Animation.Velocity = 0;
-		item->Animation.VerticalVelocity = 0;
+		item->Animation.Velocity.z = 0;
+		item->Animation.Velocity.y = 0;
 		item->Animation.IsAirborne = false;
 		item->Pose.Position.y += coll->Middle.Ceiling + (LARA_HEIGHT_MONKEY - coll->Setup.Height);
 		lara->Control.HandStatus = HandStatus::Busy;
@@ -373,8 +373,8 @@ bool TestLaraHangJumpUp(ItemInfo* item, CollisionInfo* coll)
 	else
 		SnapItemToLedge(item, coll);
 
-	item->Animation.Velocity = 0;
-	item->Animation.VerticalVelocity = 0;
+	item->Animation.Velocity.z = 0;
+	item->Animation.Velocity.y = 0;
 	item->Animation.IsAirborne = false;
 	lara->Control.HandStatus = HandStatus::Busy;
 	lara->ExtraTorsoRot = Vector3Shrt();
@@ -386,14 +386,14 @@ int TestLaraEdgeCatch(ItemInfo* item, CollisionInfo* coll, int* edge)
 	BOUNDING_BOX* bounds = GetBoundsAccurate(item);
 	int heightDif = coll->Front.Floor - bounds->Y1;
 
-	if (heightDif < 0 == heightDif + item->Animation.VerticalVelocity < 0)
+	if (heightDif < 0 == heightDif + item->Animation.Velocity.y < 0)
 	{
 		heightDif = item->Pose.Position.y + bounds->Y1;
 
-		if ((heightDif + item->Animation.VerticalVelocity & 0xFFFFFF00) != (heightDif & 0xFFFFFF00))
+		if ((heightDif + (int)round(item->Animation.Velocity.y) & 0xFFFFFF00) != (heightDif & 0xFFFFFF00))
 		{
-			if (item->Animation.VerticalVelocity > 0)
-				*edge = (heightDif + item->Animation.VerticalVelocity) & 0xFFFFFF00;
+			if (item->Animation.Velocity.y > 0)
+				*edge = (int)round(heightDif + item->Animation.Velocity.y) & 0xFFFFFF00;
 			else
 				*edge = heightDif & 0xFFFFFF00;
 
@@ -458,7 +458,7 @@ bool TestLaraHangOnClimbableWall(ItemInfo* item, CollisionInfo* coll)
 	if (!lara->Control.CanClimbLadder)
 		return false;
 
-	if (item->Animation.VerticalVelocity < 0)
+	if (item->Animation.Velocity.y < 0)
 		return false;
 
 	// HACK: Climb wall tests are highly fragile and depend on quadrant shifts.
@@ -495,10 +495,10 @@ bool TestLaraHangOnClimbableWall(ItemInfo* item, CollisionInfo* coll)
 			return false;
 	}
 
-	if (LaraTestClimbPos(item, LARA_RADIUS, LARA_RADIUS, bounds->Y1, bounds->Y2 - bounds->Y1, &shift) &&
-		LaraTestClimbPos(item, LARA_RADIUS, -LARA_RADIUS, bounds->Y1, bounds->Y2 - bounds->Y1, &shift))
+	if (LaraTestClimbPos(item, LARA_RADIUS, LARA_RADIUS, bounds->Y1, bounds->Height(), &shift) &&
+		LaraTestClimbPos(item, LARA_RADIUS, -LARA_RADIUS, bounds->Y1, bounds->Height(), &shift))
 	{
-		result = LaraTestClimbPos(item, LARA_RADIUS, 0, bounds->Y1, bounds->Y2 - bounds->Y1, &shift);
+		result = LaraTestClimbPos(item, LARA_RADIUS, 0, bounds->Y1, bounds->Height(), &shift);
 		if (result)
 		{
 			if (result != 1)
@@ -907,8 +907,8 @@ bool TestLaraWaterStepOut(ItemInfo* item, CollisionInfo* coll)
 
 	item->Pose.Orientation.x = 0;
 	item->Pose.Orientation.z = 0;
-	item->Animation.Velocity = 0;
-	item->Animation.VerticalVelocity = 0;
+	item->Animation.Velocity.z = 0;
+	item->Animation.Velocity.y = 0;
 	item->Animation.IsAirborne = false;
 	lara->Control.WaterStatus = WaterStatus::Wade;
 
@@ -992,8 +992,8 @@ bool TestLaraWaterClimbOut(ItemInfo* item, CollisionInfo* coll)
 	item->Pose.Position.y += frontFloor - 5;
 	item->Animation.ActiveState = LS_ONWATER_EXIT;
 	item->Animation.IsAirborne = false;
-	item->Animation.Velocity = 0;
-	item->Animation.VerticalVelocity = 0;
+	item->Animation.Velocity.z = 0;
+	item->Animation.Velocity.y = 0;
 	lara->Control.TurnRate = 0;
 	lara->Control.HandStatus = HandStatus::Busy;
 	lara->Control.WaterStatus = WaterStatus::Dry;
@@ -1004,9 +1004,7 @@ bool TestLaraLadderClimbOut(ItemInfo* item, CollisionInfo* coll) // NEW function
 {
 	auto* lara = GetLaraInfo(item);
 
-	if (!(TrInput & IN_ACTION) ||
-		!lara->Control.CanClimbLadder ||
-		coll->CollisionType != CT_FRONT)
+	if (!(TrInput & IN_ACTION) || !lara->Control.CanClimbLadder || coll->CollisionType != CT_FRONT)
 	{
 		return false;
 	}
@@ -1016,6 +1014,9 @@ bool TestLaraLadderClimbOut(ItemInfo* item, CollisionInfo* coll) // NEW function
 	{
 		return false;
 	}
+
+	// HACK: Reduce probe radius, because free forward probe mode makes ladder tests to fail in some cases.
+	coll->Setup.Radius *= 0.8f; 
 
 	if (!TestLaraClimbIdle(item, coll))
 		return false;
@@ -1061,8 +1062,8 @@ bool TestLaraLadderClimbOut(ItemInfo* item, CollisionInfo* coll) // NEW function
 	item->Pose.Orientation.x = 0;
 	item->Pose.Orientation.y = facing;
 	item->Pose.Orientation.z = 0;
-	item->Animation.Velocity = 0;
-	item->Animation.VerticalVelocity = 0;
+	item->Animation.Velocity.z = 0;
+	item->Animation.Velocity.y = 0;
 	item->Animation.IsAirborne = false;
 	lara->Control.TurnRate = 0;
 	lara->Control.HandStatus = HandStatus::Busy;
@@ -1079,7 +1080,7 @@ void TestLaraWaterDepth(ItemInfo* item, CollisionInfo* coll)
 
 	if (waterDepth == NO_HEIGHT)
 	{
-		item->Animation.VerticalVelocity = 0;
+		item->Animation.Velocity.y = 0;
 		item->Pose.Position = coll->Setup.OldPosition;
 	}
 	// Height check was at CLICK(2) before but changed to this 
@@ -1092,8 +1093,8 @@ void TestLaraWaterDepth(ItemInfo* item, CollisionInfo* coll)
 		item->Pose.Orientation.x = 0;
 		item->Pose.Orientation.z = 0;
 		item->Animation.IsAirborne = false;
-		item->Animation.Velocity = 0;
-		item->Animation.VerticalVelocity = 0;
+		item->Animation.Velocity.z = 0;
+		item->Animation.Velocity.y = 0;
 		lara->Control.WaterStatus = WaterStatus::Wade;
 	}
 }
@@ -1112,22 +1113,22 @@ void GetTightropeFallOff(ItemInfo* item, int regularity)
 #endif
 
 // TODO: Organise all of this properly. -- Sezz 2022.07.28
-bool CheckLaraState(LaraState state, std::vector<LaraState> stateList)
+bool CheckLaraState(LaraState referenceState, const std::vector<LaraState>& stateList)
 {
-	for (auto listedState : stateList)
+	for (auto& state : stateList)
 	{
-		if (state == listedState)
+		if (state == referenceState)
 			return true;
 	}
 
 	return false;
 }
 
-bool CheckLaraWeaponType(LaraWeaponType weaponType, std::vector<LaraWeaponType> weaponTypeList)
+bool CheckLaraWeaponType(LaraWeaponType referenceWeaponType, const std::vector<LaraWeaponType>& weaponTypeList)
 {
-	for (auto listedWeaponType : weaponTypeList)
+	for (auto& weaponType : weaponTypeList)
 	{
-		if (weaponType == listedWeaponType)
+		if (weaponType == referenceWeaponType)
 			return true;
 	}
 
@@ -1213,6 +1214,16 @@ bool IsRunJumpCountableState(LaraState state)
 	return CheckLaraState(state, RunningJumpTimerStates);
 }
 
+bool TestLaraTurn180(ItemInfo* item, CollisionInfo* coll)
+{
+	auto* lara = GetLaraInfo(item);
+
+	if (lara->Control.WaterStatus == WaterStatus::Wade || TestEnvironment(ENV_FLAG_SWAMP, item))
+		return true;
+
+	return false;
+}
+
 bool TestLaraPose(ItemInfo* item, CollisionInfo* coll)
 {
 	auto* lara = GetLaraInfo(item);
@@ -1295,9 +1306,8 @@ bool TestLaraLand(ItemInfo* item, CollisionInfo* coll)
 {
 	int heightFromFloor = GetCollision(item).Position.Floor - item->Pose.Position.y;
 
-	if (item->Animation.IsAirborne &&
-		item->Animation.VerticalVelocity >= 0 &&
-		(heightFromFloor <= item->Animation.VerticalVelocity ||
+	if (item->Animation.IsAirborne && item->Animation.Velocity.y >= 0 &&
+		(heightFromFloor <= item->Animation.Velocity.y ||
 			TestEnvironment(ENV_FLAG_SWAMP, item)))
 	{
 		return true;
@@ -2484,7 +2494,7 @@ bool TestLaraSlideJump(ItemInfo* item, CollisionInfo* coll)
 		auto probe = GetCollision(item);
 
 		short direction = GetLaraSlideDirection(item, coll);
-		short steepness = GetSurfaceSteepnessAngle(probe.FloorTilt.x, probe.FloorTilt.y);
+		short steepness = GetSurfaceSteepnessAngle(probe.FloorTilt);
 		return (abs((short)(coll->Setup.ForwardAngle - direction)) <= abs(steepness));
 	}
 
@@ -2519,25 +2529,33 @@ bool TestLaraTightropeDismount(ItemInfo* item, CollisionInfo* coll)
 	return false;
 }
 
-bool TestLaraPoleCollision(ItemInfo* item, CollisionInfo* coll, bool up, float offset)
+bool TestLaraPoleCollision(ItemInfo* item, CollisionInfo* coll, bool goingUp, float offset)
 {
 	static constexpr auto poleProbeCollRadius = 16.0f;
 
 	bool atLeastOnePoleCollided = false;
 
-	if (GetCollidedObjects(item, SECTOR(1), true, CollidedItems, nullptr, 0) && CollidedItems[0])
+	if (GetCollidedObjects(item, SECTOR(1), true, CollidedItems, nullptr, false) &&
+		CollidedItems[0] != nullptr)
 	{
 		auto laraBox = TO_DX_BBOX(item->Pose, GetBoundsAccurate(item));
 
-		// HACK: because Core implemented upward pole movement as SetPosition command, we can't precisely
+		// HACK: Because Core implemented upward pole movement as a SetPosition command, we can't precisely
 		// check her position. So we add a fixed height offset.
 
-		auto sphere = BoundingSphere(laraBox.Center + Vector3(0, (laraBox.Extents.y + poleProbeCollRadius + offset) * (up ? -1 : 1), 0), poleProbeCollRadius);
+		// Offset a sphere when jumping toward pole.
+		auto sphereOffset2D = Vector3::Zero;
+		sphereOffset2D = TranslateVector(sphereOffset2D, item->Pose.Orientation.y, coll->Setup.Radius + item->Animation.Velocity.z);
+
+		auto spherePos = laraBox.Center + Vector3(0.0f, (laraBox.Extents.y + poleProbeCollRadius + offset) * (goingUp ? -1 : 1), 0.0f);
+
+		auto sphere = BoundingSphere(spherePos, poleProbeCollRadius);
+		auto offsetSphere = BoundingSphere(spherePos + sphereOffset2D, poleProbeCollRadius);
 
 		//g_Renderer.AddDebugSphere(sphere.Center, 16.0f, Vector4(1, 0, 0, 1), RENDERER_DEBUG_PAGE::LOGIC_STATS);
 
 		int i = 0;
-		while (CollidedItems[i] != NULL)
+		while (CollidedItems[i] != nullptr)
 		{
 			auto*& object = CollidedItems[i];
 			i++;
@@ -2546,11 +2564,11 @@ bool TestLaraPoleCollision(ItemInfo* item, CollisionInfo* coll, bool up, float o
 				continue;
 
 			auto poleBox = TO_DX_BBOX(object->Pose, GetBoundsAccurate(object));
-			poleBox.Extents = poleBox.Extents + Vector3(coll->Setup.Radius, 0, coll->Setup.Radius);
+			poleBox.Extents = poleBox.Extents + Vector3(coll->Setup.Radius, 0.0f, coll->Setup.Radius);
 
 			//g_Renderer.AddDebugBox(poleBox, Vector4(0, 0, 1, 1), RENDERER_DEBUG_PAGE::LOGIC_STATS);
 
-			if (poleBox.Intersects(sphere))
+			if (poleBox.Intersects(sphere) || poleBox.Intersects(offsetSphere))
 			{
 				atLeastOnePoleCollided = true;
 				break;

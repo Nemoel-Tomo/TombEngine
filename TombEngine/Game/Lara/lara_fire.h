@@ -1,8 +1,11 @@
 #pragma once
 #include "Game/Lara/lara.h"
 
-struct ItemInfo;
+using std::pair;
+
 struct CollisionInfo;
+struct ItemInfo;
+struct Vector3Shrt;
 
 constexpr auto MAX_TARGETS = 8;
 
@@ -15,9 +18,10 @@ enum class FireWeaponType
 
 struct WeaponInfo
 {
-	short LockAngles[4];
-	short LeftAngles[4];
-	short RightAngles[4];
+	pair<Vector3Shrt, Vector3Shrt> LockOrientConstraint  = {};
+	pair<Vector3Shrt, Vector3Shrt> LeftOrientConstraint  = {};
+	pair<Vector3Shrt, Vector3Shrt> RightOrientConstraint = {};
+
 	int AimSpeed;
 	short ShotAccuracy;
 	int GunHeight;
@@ -46,15 +50,15 @@ enum WeaponState
 extern WeaponInfo Weapons[(int)LaraWeaponType::NumWeapons];
 extern int FlashGrenadeAftershockTimer;
 
-void SmashItem(short itemNum);
+void SmashItem(short itemNumber);
 GAME_OBJECT_ID WeaponObject(LaraWeaponType weaponType);
 void LaraGun(ItemInfo* laraItem);
 Ammo& GetAmmo(ItemInfo* laraItem, LaraWeaponType weaponType);
 void InitialiseNewWeapon(ItemInfo* laraItem);
 GAME_OBJECT_ID WeaponObjectMesh(ItemInfo* laraItem, LaraWeaponType weaponType);
 void AimWeapon(ItemInfo* laraItem, WeaponInfo* weaponInfo, ArmInfo* arm);
-void HitTarget(ItemInfo* laraItem, ItemInfo* target, GameVector* hitPos, int damage, int flag);
-FireWeaponType FireWeapon(LaraWeaponType weaponType, ItemInfo* target, ItemInfo* src, Vector3Shrt armOrient);
+void HitTarget(ItemInfo* laraItem, ItemInfo* targetEntity, GameVector* hitPos, int damage, int flag);
+FireWeaponType FireWeapon(LaraWeaponType weaponType, ItemInfo* targetEntity, ItemInfo* originEntity, Vector3Shrt armOrient);
 void FindTargetPoint(ItemInfo* laraItem, GameVector* target);
 void LaraTargetInfo(ItemInfo* laraItem, WeaponInfo* weaponInfo);
 void LaraGetNewTarget(ItemInfo* laraItem, WeaponInfo* weaponInfo);

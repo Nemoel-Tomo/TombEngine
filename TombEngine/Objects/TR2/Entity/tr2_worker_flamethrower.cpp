@@ -16,10 +16,10 @@
 #include "Specific/level.h"
 #include "Specific/trmath.h"
 
-namespace TEN::Entities::TR2
+namespace TEN::Entities::Creatures::TR2
 {
-	BiteInfo WorkerFlamethrowerBite = { 0, 250, 32, 9 };
-	Vector3Int WorkerFlamethrowerOffset = { 0, 140, 0 };
+	const auto WorkerFlamethrowerOffset = Vector3Int(0, 140, 0);
+	const auto WorkerFlamethrowerBite = BiteInfo(Vector3(0.0f, 250.0f, 32.0f), 9);
 
 	// TODO
 	enum WorkerFlamethrowerState
@@ -63,9 +63,7 @@ namespace TEN::Entities::TR2
 		short torsoX = 0;
 		short torsoY = 0;
 
-		pos.x = WorkerFlamethrowerBite.x;
-		pos.y = WorkerFlamethrowerBite.y;
-		pos.z = WorkerFlamethrowerBite.z;
+		pos = Vector3Int(WorkerFlamethrowerBite.Position);
 		GetJointAbsPosition(item, &pos, WorkerFlamethrowerBite.meshNum);
 
 		if (item->HitPoints <= 0)

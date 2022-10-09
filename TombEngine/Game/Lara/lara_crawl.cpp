@@ -42,6 +42,8 @@ void lara_as_crouch_idle(ItemInfo* item, CollisionInfo* coll)
 	coll->Setup.EnableSpasm = false;
 	Camera.targetDistance = SECTOR(1);
 
+	AlignLaraToSurface(item);
+
 	// TODO: Dispatch pickups from within states.
 	if (item->Animation.TargetState == LS_PICKUP)
 		return;
@@ -108,7 +110,7 @@ void lara_col_crouch_idle(ItemInfo* item, CollisionInfo* coll)
 {
 	auto* lara = GetLaraInfo(item);
 
-	item->Animation.VerticalVelocity = 0;
+	item->Animation.Velocity.y = 0;
 	item->Animation.IsAirborne = false;
 	lara->Control.KeepLow = TestLaraKeepLow(item, coll);
 	lara->Control.IsLow = true;
@@ -156,6 +158,8 @@ void lara_as_crouch_roll(ItemInfo* item, CollisionInfo* coll)
 	coll->Setup.EnableSpasm = false;
 	Camera.targetDistance = SECTOR(1);
 
+	AlignLaraToSurface(item);
+
 	if (TrInput & (IN_LEFT | IN_RIGHT))
 	{
 		ModulateLaraTurnRateY(item, LARA_TURN_RATE_ACCEL, 0, LARA_CROUCH_ROLL_TURN_RATE_MAX);
@@ -171,7 +175,7 @@ void lara_col_crouch_roll(ItemInfo* item, CollisionInfo* coll)
 {
 	auto* lara = GetLaraInfo(item);
 
-	item->Animation.VerticalVelocity = 0;
+	item->Animation.Velocity.y = 0;
 	item->Animation.IsAirborne = false;
 	lara->Control.KeepLow = TestLaraKeepLow(item, coll);
 	lara->Control.IsLow = true;
@@ -193,7 +197,7 @@ void lara_col_crouch_roll(ItemInfo* item, CollisionInfo* coll)
 	{
 		SetLaraFallAnimation(item);
 		lara->Control.HandStatus = HandStatus::Free;
-		item->Animation.Velocity /= 3;				// Truncate speed to prevent flying off.
+		item->Animation.Velocity.z /= 3;				// Truncate speed to prevent flying off.
 		return;
 	}
 
@@ -226,6 +230,8 @@ void lara_as_crouch_turn_left(ItemInfo* item, CollisionInfo* coll)
 
 	coll->Setup.EnableSpasm = false;
 	Camera.targetDistance = SECTOR(1);
+
+	AlignLaraToSurface(item);
 
 	if (item->HitPoints <= 0)
 	{
@@ -282,6 +288,8 @@ void lara_as_crouch_turn_right(ItemInfo* item, CollisionInfo* coll)
 	coll->Setup.EnableSpasm = false;
 	Camera.targetDistance = SECTOR(1);
 
+	AlignLaraToSurface(item);
+
 	if (item->HitPoints <= 0)
 	{
 		item->Animation.TargetState = LS_DEATH;
@@ -337,6 +345,8 @@ void lara_as_crouch_turn_180(ItemInfo* item, CollisionInfo* coll)
 	coll->Setup.EnableSpasm = false;
 	Camera.targetDistance = SECTOR(1);
 
+	AlignLaraToSurface(item);
+
 	if ((TrInput & IN_CROUCH || lara->Control.KeepLow) &&
 		lara->Control.WaterStatus != WaterStatus::Wade)
 	{
@@ -374,6 +384,8 @@ void lara_as_crawl_idle(ItemInfo* item, CollisionInfo* coll)
 	coll->Setup.EnableObjectPush = true;
 	coll->Setup.EnableSpasm = false;
 	Camera.targetDistance = SECTOR(1);
+
+	AlignLaraToSurface(item);
 
 	// TODO: Dispatch pickups from within states.
 	if (item->Animation.TargetState == LS_PICKUP)
@@ -471,7 +483,7 @@ void lara_col_crawl_idle(ItemInfo* item, CollisionInfo* coll)
 {
 	auto* lara = GetLaraInfo(item);
 
-	item->Animation.VerticalVelocity = 0;
+	item->Animation.Velocity.y = 0;
 	item->Animation.IsAirborne = false;
 	lara->Control.KeepLow = TestLaraKeepLow(item, coll);
 	lara->Control.IsLow = true;
@@ -520,6 +532,8 @@ void lara_as_crawl_forward(ItemInfo* item, CollisionInfo* coll)
 	coll->Setup.EnableSpasm = false;
 	Camera.targetDistance = SECTOR(1);
 
+	AlignLaraToSurface(item);
+
 	if (item->HitPoints <= 0)
 	{
 		item->Animation.TargetState = LS_DEATH;
@@ -560,7 +574,7 @@ void lara_col_crawl_forward(ItemInfo* item, CollisionInfo* coll)
 {
 	auto* lara = GetLaraInfo(item);
 
-	item->Animation.VerticalVelocity = 0;
+	item->Animation.Velocity.y = 0;
 	item->Animation.IsAirborne = false;
 	lara->Control.KeepLow = TestLaraKeepLow(item, coll);
 	lara->Control.IsLow = true;
@@ -614,6 +628,8 @@ void lara_as_crawl_back(ItemInfo* item, CollisionInfo* coll)
 	coll->Setup.EnableSpasm = false;
 	Camera.targetDistance = SECTOR(1);
 
+	AlignLaraToSurface(item);
+
 	if (item->HitPoints <= 0)
 	{
 		item->Animation.TargetState = LS_DEATH;
@@ -648,7 +664,7 @@ void lara_col_crawl_back(ItemInfo* item, CollisionInfo* coll)
 {
 	auto* lara = GetLaraInfo(item);
 
-	item->Animation.VerticalVelocity = 0;
+	item->Animation.Velocity.y = 0;
 	item->Animation.IsAirborne = false;
 	lara->Control.KeepLow = TestLaraKeepLow(item, coll);
 	lara->Control.IsLow = true;
@@ -698,6 +714,8 @@ void lara_as_crawl_turn_left(ItemInfo* item, CollisionInfo* coll)
 	coll->Setup.EnableObjectPush = true;
 	coll->Setup.EnableSpasm = false;
 	Camera.targetDistance = SECTOR(1);
+
+	AlignLaraToSurface(item);
 
 	if (item->HitPoints <= 0)
 	{
@@ -758,6 +776,8 @@ void lara_as_crawl_turn_right(ItemInfo* item, CollisionInfo* coll)
 	coll->Setup.EnableSpasm = false;
 	Camera.targetDistance = SECTOR(1);
 
+	AlignLaraToSurface(item);
+
 	if (item->HitPoints <= 0)
 	{
 		item->Animation.TargetState = LS_DEATH;
@@ -815,6 +835,8 @@ void lara_as_crawl_turn_180(ItemInfo* item, CollisionInfo* coll)
 	coll->Setup.EnableSpasm = false;
 	Camera.targetDistance = SECTOR(1);
 
+	AlignLaraToSurface(item);
+
 	if ((TrInput & IN_CROUCH || lara->Control.KeepLow) &&
 		lara->Control.WaterStatus != WaterStatus::Wade)
 	{
@@ -842,6 +864,8 @@ void lara_col_crawl_to_hang(ItemInfo* item, CollisionInfo* coll)
 	Camera.targetAngle = 0;
 	Camera.targetDistance = SECTOR(1);
 
+	ResetLaraLean(item, 6.0f);
+
 	if (item->Animation.AnimNumber == LA_CRAWL_TO_HANG_END)
 	{
 		lara->Control.MoveAngle = item->Pose.Orientation.y;
@@ -860,7 +884,7 @@ void lara_col_crawl_to_hang(ItemInfo* item, CollisionInfo* coll)
 		lara->Control.HandStatus = HandStatus::Busy;
 		item->Pose.Position.y += coll->Front.Floor - GetBoundsAccurate(item)->Y1 - 20;
 		item->Animation.IsAirborne = true;
-		item->Animation.Velocity = 2;
-		item->Animation.VerticalVelocity = 1;
+		item->Animation.Velocity.z = 2;
+		item->Animation.Velocity.y = 1;
 	}
 }

@@ -102,6 +102,46 @@ Save::Position FromPHD(PHD_3DPOS const& src)
 	};
 }
 
+Save::Vector3 FromVector3(Vector3 vec)
+{
+	return Save::Vector3(vec.x, vec.y, vec.z);
+}
+
+Save::Vector3 FromVector3(Vector3Int vec)
+{
+	return Save::Vector3(vec.x, vec.y, vec.z);
+}
+
+Save::Vector3 FromVector3(Vector3Shrt vec)
+{
+	return Save::Vector3(vec.x, vec.y, vec.z);
+}
+
+Save::Vector4 FromVector4(Vector4 vec)
+{
+	return Save::Vector4(vec.x, vec.y, vec.z, vec.w);
+}
+
+Vector3Shrt ToVector3Shrt(const Save::Vector3* vec)
+{
+	return Vector3Shrt(short(vec->x()), short(vec->y()), short(vec->z()));
+}
+
+Vector3Int ToVector3Int(const Save::Vector3* vec)
+{
+	return Vector3Int(int(vec->x()), int(vec->y()), int(vec->z()));
+}
+
+Vector3 ToVector3(const Save::Vector3* vec)
+{
+	return Vector3(vec->x(), vec->y(), vec->z());
+}
+
+Vector4 ToVector4(const Save::Vector4* vec)
+{
+	return Vector4(vec->x(), vec->y(), vec->z(), vec->w());
+}
+
 bool SaveGame::Save(int slot)
 {
 	auto fileName = std::string(SAVEGAME_PATH) + "savegame." + std::to_string(slot);
@@ -196,17 +236,6 @@ bool SaveGame::Save(int slot)
 		wet.push_back(Lara.Wet[i] == 1);
 	auto wetOffset = fbb.CreateVector(wet);
 
-	Save::Vector3 nextCornerPos = Save::Vector3(Lara.NextCornerPos.Position.x, Lara.NextCornerPos.Position.y, Lara.NextCornerPos.Position.z);
-	Save::Vector3 nextCornerRot = Save::Vector3(Lara.NextCornerPos.Orientation.x, Lara.NextCornerPos.Orientation.y, Lara.NextCornerPos.Orientation.z);
-
-	Save::Vector3 leftArmRotation = Save::Vector3(Lara.LeftArm.Orientation.x, Lara.LeftArm.Orientation.y, Lara.LeftArm.Orientation.z);
-	Save::Vector3 rightArmRotation = Save::Vector3(Lara.RightArm.Orientation.x, Lara.RightArm.Orientation.y, Lara.RightArm.Orientation.z);
-	
-	Save::Vector3 extraHeadRot = Save::Vector3(Lara.ExtraHeadRot.x, Lara.ExtraHeadRot.y, Lara.ExtraHeadRot.z);
-	Save::Vector3 extraTorsoRot = Save::Vector3(Lara.ExtraTorsoRot.x, Lara.ExtraTorsoRot.y, Lara.ExtraTorsoRot.z);
-	Save::Vector3 extraVelocity = Save::Vector3(Lara.ExtraVelocity.x, Lara.ExtraVelocity.y, Lara.ExtraVelocity.z);
-	Save::Vector3 waterCurrentPull = Save::Vector3(Lara.WaterCurrentPull.x, Lara.WaterCurrentPull.y, Lara.WaterCurrentPull.z);
-
 	std::vector<int> laraTargetAngles{};
 	laraTargetAngles.push_back(Lara.TargetArmOrient.y);
 	laraTargetAngles.push_back(Lara.TargetArmOrient.x);
@@ -230,7 +259,7 @@ bool SaveGame::Save(int slot)
 	leftArm.add_frame_base(Lara.LeftArm.FrameBase);
 	leftArm.add_frame_number(Lara.LeftArm.FrameNumber);
 	leftArm.add_locked(Lara.LeftArm.Locked);
-	leftArm.add_rotation(&leftArmRotation);
+	leftArm.add_rotation(&FromVector3(Lara.LeftArm.Orientation));
 	auto leftArmOffset = leftArm.Finish();
 
 	Save::ArmInfoBuilder rightArm{ fbb };
@@ -240,7 +269,7 @@ bool SaveGame::Save(int slot)
 	rightArm.add_frame_base(Lara.RightArm.FrameBase);
 	rightArm.add_frame_number(Lara.RightArm.FrameNumber);
 	rightArm.add_locked(Lara.RightArm.Locked);
-	rightArm.add_rotation(&rightArmRotation);
+	rightArm.add_rotation(&FromVector3(Lara.RightArm.Orientation));
 	auto rightArmOffset = rightArm.Finish();
 
 	Save::FlareDataBuilder flare{ fbb };
@@ -397,12 +426,10 @@ bool SaveGame::Save(int slot)
 	lara.add_burn_blue(Lara.BurnBlue);
 	lara.add_burn_smoke(Lara.BurnSmoke);
 	lara.add_control(controlOffset);
-	lara.add_next_corner_position(&nextCornerPos);
-	lara.add_next_corner_rotation(&nextCornerRot);
+	lara.add_next_corner_pose(&FromPHD(Lara.NextCornerPos));
 	lara.add_extra_anim(Lara.ExtraAnim);
-	lara.add_extra_head_rot(&extraHeadRot);
-	lara.add_extra_torso_rot(&extraTorsoRot);
-	lara.add_extra_velocity(&extraVelocity);
+	lara.add_extra_head_rot(&FromVector3(Lara.ExtraHeadRot));
+	lara.add_extra_torso_rot(&FromVector3(Lara.ExtraTorsoRot));
 	lara.add_flare(flareOffset);
 	lara.add_highest_location(Lara.HighestLocation);
 	lara.add_hit_direction(Lara.HitDirection);
@@ -424,7 +451,7 @@ bool SaveGame::Save(int slot)
 	lara.add_torch(torchOffset);
 	lara.add_vehicle(Lara.Vehicle);
 	lara.add_water_current_active(Lara.WaterCurrentActive);
-	lara.add_water_current_pull(&waterCurrentPull);
+	lara.add_water_current_pull(&FromVector3(Lara.WaterCurrentPull));
 	lara.add_water_surface_dist(Lara.WaterSurfaceDist);
 	lara.add_weapons(carriedWeaponsOffset);
 	lara.add_wet(wetOffset);
@@ -563,13 +590,7 @@ bool SaveGame::Save(int slot)
 			kayakBuilder.add_front_vertical_velocity(kayak->FrontVerticalVelocity);
 			kayakBuilder.add_left_right_count(kayak->LeftRightPaddleCount);
 			kayakBuilder.add_left_vertical_velocity(kayak->LeftVerticalVelocity);
-			kayakBuilder.add_old_pos(&Save::Position(
-				kayak->OldPose.Position.x, 
-				kayak->OldPose.Position.y, 
-				kayak->OldPose.Position.z, 
-				kayak->OldPose.Orientation.x, 
-				kayak->OldPose.Orientation.y, 
-				kayak->OldPose.Orientation.z));
+			kayakBuilder.add_old_pos(&FromPHD(kayak->OldPose));
 			kayakBuilder.add_right_vertical_velocity(kayak->RightVerticalVelocity);
 			kayakBuilder.add_true_water(kayak->TrueWater);
 			kayakBuilder.add_turn(kayak->Turn);
@@ -592,22 +613,7 @@ bool SaveGame::Save(int slot)
 			intOffset = ib.Finish();
 		}
 
-		Save::Position position = Save::Position(
-			(int32_t)itemToSerialize.Pose.Position.x,
-			(int32_t)itemToSerialize.Pose.Position.y,
-			(int32_t)itemToSerialize.Pose.Position.z,
-			(int32_t)itemToSerialize.Pose.Orientation.x,
-			(int32_t)itemToSerialize.Pose.Orientation.y,
-			(int32_t)itemToSerialize.Pose.Orientation.z);
-
-		Save::Vector4 color = Save::Vector4(
-			itemToSerialize.Color.x,
-			itemToSerialize.Color.y,
-			itemToSerialize.Color.z,
-			itemToSerialize.Color.w);
-
 		Save::ItemBuilder serializedItem{ fbb };
-
 		serializedItem.add_next_item(itemToSerialize.NextItem);
 		serializedItem.add_next_item_active(itemToSerialize.NextActive);
 		serializedItem.add_anim_number(itemToSerialize.Animation.AnimNumber - obj->animIndex);
@@ -615,7 +621,6 @@ bool SaveGame::Save(int slot)
 		serializedItem.add_box_number(itemToSerialize.BoxNumber);
 		serializedItem.add_carried_item(itemToSerialize.CarriedItem);
 		serializedItem.add_active_state(itemToSerialize.Animation.ActiveState);
-		serializedItem.add_vertical_velocity(itemToSerialize.Animation.VerticalVelocity);
 		serializedItem.add_flags(itemToSerialize.Flags);
 		serializedItem.add_floor(itemToSerialize.Floor);
 		serializedItem.add_frame_number(itemToSerialize.Animation.FrameNumber);
@@ -624,12 +629,12 @@ bool SaveGame::Save(int slot)
 		serializedItem.add_item_flags(itemFlagsOffset);
 		serializedItem.add_mesh_bits(itemToSerialize.MeshBits);
 		serializedItem.add_object_id(itemToSerialize.ObjectNumber);
-		serializedItem.add_position(&position);
+		serializedItem.add_pose(&FromPHD(itemToSerialize.Pose));
 		serializedItem.add_required_state(itemToSerialize.Animation.RequiredState);
 		serializedItem.add_room_number(itemToSerialize.RoomNumber);
-		serializedItem.add_velocity(itemToSerialize.Animation.Velocity);
+		serializedItem.add_velocity(&FromVector3(itemToSerialize.Animation.Velocity));
 		serializedItem.add_timer(itemToSerialize.Timer);
-		serializedItem.add_color(&color);
+		serializedItem.add_color(&FromVector4(itemToSerialize.Color));
 		serializedItem.add_touch_bits(itemToSerialize.TouchBits);
 		serializedItem.add_trigger_flags(itemToSerialize.TriggerFlags);
 		serializedItem.add_triggered((itemToSerialize.Flags & (TRIGGERED | CODE_BITS | ONESHOT)) != 0);
@@ -700,9 +705,8 @@ bool SaveGame::Save(int slot)
 	for (auto& effectToSerialize : EffectList)
 	{
 		Save::FXInfoBuilder serializedEffect{ fbb };
-		auto savedPos = FromPHD(effectToSerialize.pos);
 
-		serializedEffect.add_pos(&savedPos);
+		serializedEffect.add_pose(&FromPHD(effectToSerialize.pos));
 		serializedEffect.add_room_number(effectToSerialize.roomNumber);
 		serializedEffect.add_object_number(effectToSerialize.objectNumber);
 		serializedEffect.add_next_fx(effectToSerialize.nextFx);
@@ -711,7 +715,7 @@ bool SaveGame::Save(int slot)
 		serializedEffect.add_fall_speed(effectToSerialize.fallspeed);
 		serializedEffect.add_frame_number(effectToSerialize.frameNumber);
 		serializedEffect.add_counter(effectToSerialize.counter);
-		serializedEffect.add_shade(effectToSerialize.shade);
+		serializedEffect.add_color(&FromVector4(effectToSerialize.color));
 		serializedEffect.add_flag1(effectToSerialize.flag1);
 		serializedEffect.add_flag2(effectToSerialize.flag2);
 
@@ -772,7 +776,7 @@ bool SaveGame::Save(int slot)
 	for (int i = 0; i < g_Level.Cameras.size(); i++)
 	{
 		Save::FixedCameraBuilder camera{ fbb };
-		camera.add_flags(g_Level.Cameras[i].flags);
+		camera.add_flags(g_Level.Cameras[i].Flags);
 		cameras.push_back(camera.Finish());
 	}
 	auto camerasOffset = fbb.CreateVector(cameras);
@@ -782,7 +786,7 @@ bool SaveGame::Save(int slot)
 	for (int i = 0; i < g_Level.Sinks.size(); i++)
 	{
 		Save::SinkBuilder sink{ fbb };
-		sink.add_flags(g_Level.Sinks[i].strength);
+		sink.add_flags(g_Level.Sinks[i].Strength);
 		sinks.push_back(sink.Finish());
 	}
 	auto sinksOffset = fbb.CreateVector(sinks);
@@ -808,22 +812,13 @@ bool SaveGame::Save(int slot)
 		{
 			Save::StaticMeshInfoBuilder staticMesh{ fbb };
 
-			staticMesh.add_position(&Save::Vector3(room->mesh[j].pos.Position.x,
-												   room->mesh[j].pos.Position.y,
-												   room->mesh[j].pos.Position.z));
-
-			staticMesh.add_rotation(&Save::Vector3(room->mesh[j].pos.Orientation.x,
-												   room->mesh[j].pos.Orientation.y,
-												   room->mesh[j].pos.Orientation.z));
-
-			staticMesh.add_color(&Save::Vector4(room->mesh[j].color.x,
-												room->mesh[j].color.y,
-												room->mesh[j].color.z,
-												room->mesh[j].color.w));
+			staticMesh.add_pose(&FromPHD(room->mesh[j].pos));
+			staticMesh.add_scale(room->mesh[j].scale);
+			staticMesh.add_color(&FromVector4(room->mesh[j].color));
 
 			staticMesh.add_flags(room->mesh[j].flags);
 			staticMesh.add_hit_points(room->mesh[j].HitPoints);
-			staticMesh.add_room_number(i);
+			staticMesh.add_room_number(room->mesh[j].roomNumber);
 			staticMesh.add_number(j);
 			staticMeshes.push_back(staticMesh.Finish());
 		}
@@ -837,18 +832,9 @@ bool SaveGame::Save(int slot)
 			volumeState.add_room_number(i);
 			volumeState.add_number(j);
 
-			volumeState.add_position(&Save::Vector3(volume.Position.x,
-													volume.Position.y,
-													volume.Position.z));
-
-			volumeState.add_rotation(&Save::Vector4(volume.Rotation.x,
-													volume.Rotation.y,
-													volume.Rotation.z,
-													volume.Rotation.w));
-
-			volumeState.add_scale(&Save::Vector3(volume.Scale.x,
-												 volume.Scale.y,
-												 volume.Scale.z));
+			volumeState.add_position(&FromVector3(volume.Position));
+			volumeState.add_rotation(&FromVector4(volume.Rotation));
+			volumeState.add_scale(&FromVector3(volume.Scale));
 
 			int triggerer = -1;
 			if (std::holds_alternative<short>(volume.Triggerer))
@@ -916,86 +902,66 @@ bool SaveGame::Save(int slot)
 	}
 	auto particleOffset = fbb.CreateVector(particles);
 
-	// Particle enemies
-	std::vector<flatbuffers::Offset<Save::BatInfo>> bats;
+	// Swarm enemies
+	std::vector<flatbuffers::Offset<Save::SwarmObjectInfo>> bats;
 	for (int i = 0; i < NUM_BATS; i++)
 	{
 		auto* bat = &Bats[i];
 
-		Save::BatInfoBuilder batInfo{ fbb };
+		Save::SwarmObjectInfoBuilder batInfo{ fbb };
 
-		batInfo.add_counter(bat->Counter);
+		batInfo.add_flags(bat->Counter);
 		batInfo.add_on(bat->On);
 		batInfo.add_room_number(bat->RoomNumber);
-		batInfo.add_x(bat->Pose.Position.x);
-		batInfo.add_y(bat->Pose.Position.y);
-		batInfo.add_z(bat->Pose.Position.z);
-		batInfo.add_x_rot(bat->Pose.Orientation.x);
-		batInfo.add_y_rot(bat->Pose.Orientation.y);
-		batInfo.add_z_rot(bat->Pose.Orientation.z);
+		batInfo.add_pose(&FromPHD(bat->Pose));
 
 		bats.push_back(batInfo.Finish());
 	}
 	auto batsOffset = fbb.CreateVector(bats);
 
-	std::vector<flatbuffers::Offset<Save::SpiderInfo>> spiders;
+	std::vector<flatbuffers::Offset<Save::SwarmObjectInfo>> spiders;
 	for (int i = 0; i < NUM_SPIDERS; i++)
 	{
 		auto* spider = &Spiders[i];
 
-		Save::SpiderInfoBuilder spiderInfo{ fbb };
+		Save::SwarmObjectInfoBuilder spiderInfo{ fbb };
 
 		spiderInfo.add_flags(spider->Flags);
 		spiderInfo.add_on(spider->On);
 		spiderInfo.add_room_number(spider->RoomNumber);
-		spiderInfo.add_x(spider->Pose.Position.x);
-		spiderInfo.add_y(spider->Pose.Position.y);
-		spiderInfo.add_z(spider->Pose.Position.z);
-		spiderInfo.add_x_rot(spider->Pose.Orientation.x);
-		spiderInfo.add_y_rot(spider->Pose.Orientation.y);
-		spiderInfo.add_z_rot(spider->Pose.Orientation.z);
+		spiderInfo.add_pose(&FromPHD(spider->Pose));
 
 		spiders.push_back(spiderInfo.Finish());
 	}
 	auto spidersOffset = fbb.CreateVector(spiders);
 
-	std::vector<flatbuffers::Offset<Save::RatInfo>> rats;
+	std::vector<flatbuffers::Offset<Save::SwarmObjectInfo>> rats;
 	for (int i = 0; i < NUM_RATS; i++)
 	{
 		auto* rat = &Rats[i];
 
-		Save::RatInfoBuilder ratInfo{ fbb };
+		Save::SwarmObjectInfoBuilder ratInfo{ fbb };
 
 		ratInfo.add_flags(rat->Flags);
 		ratInfo.add_on(rat->On);
 		ratInfo.add_room_number(rat->RoomNumber);
-		ratInfo.add_x(rat->Pose.Position.x);
-		ratInfo.add_y(rat->Pose.Position.y);
-		ratInfo.add_z(rat->Pose.Position.z);
-		ratInfo.add_x_rot(rat->Pose.Orientation.x);
-		ratInfo.add_y_rot(rat->Pose.Orientation.y);
-		ratInfo.add_z_rot(rat->Pose.Orientation.z);
+		ratInfo.add_pose(&FromPHD(rat->Pose));
 
 		rats.push_back(ratInfo.Finish());
 	}
 	auto ratsOffset = fbb.CreateVector(rats);
 
-	std::vector<flatbuffers::Offset<Save::ScarabInfo>> scarabs;
+	std::vector<flatbuffers::Offset<Save::SwarmObjectInfo>> scarabs;
 	for (int i = 0; i < NUM_BATS; i++)
 	{
 		auto* beetle = &BeetleSwarm[i];
 
-		Save::ScarabInfoBuilder scarabInfo{ fbb };
+		Save::SwarmObjectInfoBuilder scarabInfo{ fbb };
 
 		scarabInfo.add_flags(beetle->Flags);
 		scarabInfo.add_on(beetle->On);
 		scarabInfo.add_room_number(beetle->RoomNumber);
-		scarabInfo.add_x(beetle->Pose.Position.x);
-		scarabInfo.add_y(beetle->Pose.Position.y);
-		scarabInfo.add_z(beetle->Pose.Position.z);
-		scarabInfo.add_x_rot(beetle->Pose.Orientation.x);
-		scarabInfo.add_y_rot(beetle->Pose.Orientation.y);
-		scarabInfo.add_z_rot(beetle->Pose.Orientation.z);
+		scarabInfo.add_pose(&FromPHD(beetle->Pose));
 
 		scarabs.push_back(scarabInfo.Finish());
 	}
@@ -1012,42 +978,27 @@ bool SaveGame::Save(int slot)
 
 		std::vector<const Save::Vector3*> segments;
 		for (int i = 0; i < ROPE_SEGMENTS; i++)
-			segments.push_back(&Save::Vector3(
-				rope->segment[i].x, 
-				rope->segment[i].y, 
-				rope->segment[i].z));
+			segments.push_back(&FromVector3(rope->segment[i]));
 		auto segmentsOffset = fbb.CreateVector(segments);
 
 		std::vector<const Save::Vector3*> velocities;
 		for (int i = 0; i < ROPE_SEGMENTS; i++)
-			velocities.push_back(&Save::Vector3(
-				rope->velocity[i].x,
-				rope->velocity[i].y,
-				rope->velocity[i].z));
+			velocities.push_back(&FromVector3(rope->velocity[i]));
 		auto velocitiesOffset = fbb.CreateVector(velocities);
 
 		std::vector<const Save::Vector3*> normalisedSegments;
 		for (int i = 0; i < ROPE_SEGMENTS; i++)
-			normalisedSegments.push_back(&Save::Vector3(
-				rope->normalisedSegment[i].x,
-				rope->normalisedSegment[i].y,
-				rope->normalisedSegment[i].z));
+			normalisedSegments.push_back(&FromVector3(rope->normalisedSegment[i]));
 		auto normalisedSegmentsOffset = fbb.CreateVector(normalisedSegments);
 
 		std::vector<const Save::Vector3*> meshSegments;
 		for (int i = 0; i < ROPE_SEGMENTS; i++)
-			meshSegments.push_back(&Save::Vector3(
-				rope->meshSegment[i].x,
-				rope->meshSegment[i].y,
-				rope->meshSegment[i].z));
+			meshSegments.push_back(&FromVector3(rope->meshSegment[i]));
 		auto meshSegmentsOffset = fbb.CreateVector(meshSegments);
 
 		std::vector<const Save::Vector3*> coords;
 		for (int i = 0; i < ROPE_SEGMENTS; i++)
-			coords.push_back(&Save::Vector3(
-				rope->coords[i].x,
-				rope->coords[i].y,
-				rope->coords[i].z));
+			coords.push_back(&FromVector3(rope->coords[i]));
 		auto coordsOffset = fbb.CreateVector(coords);
 
 		Save::RopeBuilder ropeInfo{ fbb };
@@ -1058,76 +1009,63 @@ bool SaveGame::Save(int slot)
 		ropeInfo.add_normalised_segments(normalisedSegmentsOffset);
 		ropeInfo.add_coords(coordsOffset);
 		ropeInfo.add_coiled(rope->coiled);
-		ropeInfo.add_position(&Save::Vector3(
-			rope->position.x,
-			rope->position.y,
-			rope->position.z));
+		ropeInfo.add_position(&FromVector3(rope->position));
 		ropeInfo.add_segment_length(rope->segmentLength);
 
 		ropeOffset = ropeInfo.Finish();
 
 		Save::PendulumBuilder pendulumInfo{ fbb };
 		pendulumInfo.add_node(CurrentPendulum.node);
-		pendulumInfo.add_position(&Save::Vector3(
-			CurrentPendulum.position.x,
-			CurrentPendulum.position.y,
-			CurrentPendulum.position.z));
-		pendulumInfo.add_velocity(&Save::Vector3(
-			CurrentPendulum.velocity.x,
-			CurrentPendulum.velocity.y,
-			CurrentPendulum.velocity.z));
+		pendulumInfo.add_position(&FromVector3(CurrentPendulum.position));
+		pendulumInfo.add_velocity(&FromVector3(CurrentPendulum.velocity));
 		pendulumOffset = pendulumInfo.Finish();
 
 		Save::PendulumBuilder alternatePendulumInfo{ fbb };
 		alternatePendulumInfo.add_node(AlternatePendulum.node);
-		alternatePendulumInfo.add_position(&Save::Vector3(
-			AlternatePendulum.position.x,
-			AlternatePendulum.position.y,
-			AlternatePendulum.position.z));
-		alternatePendulumInfo.add_velocity(&Save::Vector3(
-			AlternatePendulum.velocity.x,
-			AlternatePendulum.velocity.y,
-			AlternatePendulum.velocity.z));
+		alternatePendulumInfo.add_position(&FromVector3(AlternatePendulum.position));
+		alternatePendulumInfo.add_velocity(&FromVector3(AlternatePendulum.velocity));
 		alternatePendulumOffset = alternatePendulumInfo.Finish();
 	}
 
-
-	std::vector<flatbuffers::Offset<Save::ScriptTable>> levelTableVec;
-	std::vector<flatbuffers::Offset<flatbuffers::String>> levelStringVec2;
-	
-	//std::vector<savedTable> savedTables;
-	std::vector<std::string> savedStrings;
 	std::vector<SavedVar> savedVars;
 
 	g_GameScript->GetVariables(savedVars);
-
 	
 	std::vector<flatbuffers::Offset<Save::UnionTable>> varsVec;
 	for (auto const& s : savedVars)
 	{
-		flatbuffers::Offset<Save::ScriptTable> scriptTableOffset;
-		flatbuffers::Offset<Save::stringTable> strOffset;
-		flatbuffers::Offset<Save::doubleTable> doubleOffset;
-		flatbuffers::Offset<Save::boolTable> boolOffset;
+		auto putDataInVec = [&varsVec, &fbb](Save::VarUnion type, auto const & offsetVar)
+		{
+			Save::UnionTableBuilder ut{ fbb };
+			ut.add_u_type(type);
+			ut.add_u(offsetVar.Union());
+			varsVec.push_back(ut.Finish());
+		};
 
 		if (std::holds_alternative<std::string>(s))
 		{
 			auto strOffset2 = fbb.CreateString(std::get<std::string>(s));
 			Save::stringTableBuilder stb{ fbb };
 			stb.add_str(strOffset2);
-			strOffset = stb.Finish();
+			auto strOffset = stb.Finish();
+
+			putDataInVec(Save::VarUnion::str, strOffset);
 		}
 		else if (std::holds_alternative<double>(s))
 		{
 			Save::doubleTableBuilder dtb{ fbb };
 			dtb.add_scalar(std::get<double>(s));
-			doubleOffset = dtb.Finish();
+			auto doubleOffset = dtb.Finish();
+
+			putDataInVec(Save::VarUnion::num, doubleOffset);
 		}
 		else if (std::holds_alternative<bool>(s))
 		{
 			Save::boolTableBuilder btb{ fbb };
 			btb.add_scalar(std::get<bool>(s));
-			boolOffset = btb.Finish();
+			auto boolOffset = btb.Finish();
+
+			putDataInVec(Save::VarUnion::boolean, boolOffset);
 		}
 		else if (std::holds_alternative<IndexTable>(s))
 		{
@@ -1141,36 +1079,42 @@ bool SaveGame::Save(int slot)
 			auto vecOffset = fbb.CreateVectorOfStructs(keyValVec);
 			Save::ScriptTableBuilder stb{ fbb };
 			stb.add_keys_vals(vecOffset);
-			scriptTableOffset = stb.Finish();
-		}
+			auto scriptTableOffset = stb.Finish();
 
-		Save::UnionTableBuilder ut{ fbb };
-		if (std::holds_alternative<std::string>(s))
-		{
-			ut.add_u_type(Save::VarUnion::str);
-			ut.add_u(strOffset.Union());
+			putDataInVec(Save::VarUnion::tab, scriptTableOffset);
 		}
-		else if (std::holds_alternative<double>(s))
+		else if (std::holds_alternative<FuncName>(s))
 		{
-			ut.add_u_type(Save::VarUnion::num);
-			ut.add_u(doubleOffset.Union());
+			std::string data = std::get<FuncName>(s).name;
+			auto strOffset = fbb.CreateString(data);
+			Save::funcNameTableBuilder ftb{ fbb };
+			ftb.add_str(strOffset);
+			auto funcNameOffset = ftb.Finish();
+
+			putDataInVec(Save::VarUnion::funcName, funcNameOffset);
 		}
-		else if (std::holds_alternative<bool>(s))
+		else if (std::holds_alternative<Vector3Int>(s))
 		{
-			ut.add_u_type(Save::VarUnion::boolean);
-			ut.add_u(boolOffset.Union());
+			Save::vec3TableBuilder vtb{ fbb };
+			Vector3Int data = std::get<Vector3Int>(s);
+			Save::Vector3 saveVec = FromVector3(std::get<Vector3Int>(s));
+			vtb.add_vec(&saveVec);
+			auto vec3Offset = vtb.Finish();
+
+			putDataInVec(Save::VarUnion::vec3, vec3Offset);
 		}
-		else if (std::holds_alternative<IndexTable>(s))
-		{
-			ut.add_u_type(Save::VarUnion::tab);
-			ut.add_u(scriptTableOffset.Union());
-		}
-		varsVec.push_back(ut.Finish());
 	}
 	auto unionVec = fbb.CreateVector(varsVec);
 	Save::UnionVecBuilder uvb{ fbb };
 	uvb.add_members(unionVec);
 	auto unionVecOffset = uvb.Finish();
+
+	std::vector<std::string> callbackVecPreControl;
+	std::vector<std::string> callbackVecPostControl;
+	g_GameScript->GetCallbackStrings(callbackVecPreControl, callbackVecPostControl);
+
+	auto stringsCallbackPreControl = fbb.CreateVectorOfStrings(callbackVecPreControl);
+	auto stringsCallbackPostControl = fbb.CreateVectorOfStrings(callbackVecPostControl);
 
 	Save::SaveGameBuilder sgb{ fbb };
 
@@ -1215,6 +1159,8 @@ bool SaveGame::Save(int slot)
 	}
 
 	sgb.add_script_vars(unionVecOffset);
+	sgb.add_callbacks_pre_control(stringsCallbackPreControl);
+	sgb.add_callbacks_post_control(stringsCallbackPostControl);
 
 	auto sg = sgb.Finish();
 	fbb.Finish(sg);
@@ -1298,18 +1244,10 @@ bool SaveGame::Load(int slot)
 		auto room = &g_Level.Rooms[staticMesh->room_number()];
 		int number = staticMesh->number();
 
-		room->mesh[number].pos.Position = Vector3Int(staticMesh->position()->x(),
-													 staticMesh->position()->y(),
-													 staticMesh->position()->z());
-
-		room->mesh[number].pos.Orientation = Vector3Shrt(short(staticMesh->rotation()->x()),
-														 short(staticMesh->rotation()->y()),
-														 short(staticMesh->rotation()->z()));
-
-		room->mesh[number].color = Vector4(staticMesh->color()->x(),
-									       staticMesh->color()->y(), 
-									       staticMesh->color()->z(),
-									       staticMesh->color()->w());
+		room->mesh[number].pos = ToPHD(staticMesh->pose());
+		room->mesh[number].roomNumber = staticMesh->room_number();
+		room->mesh[number].scale = staticMesh->scale();
+		room->mesh[number].color = ToVector4(staticMesh->color());
 
 		room->mesh[number].flags = staticMesh->flags();
 		room->mesh[number].HitPoints = staticMesh->hit_points();
@@ -1330,18 +1268,9 @@ bool SaveGame::Load(int slot)
 		auto room = &g_Level.Rooms[volume->room_number()];
 		int number = volume->number();
 
-		room->triggerVolumes[number].Position = Vector3(volume->position()->x(),
-													    volume->position()->y(),
-													    volume->position()->z());
-
-		room->triggerVolumes[number].Rotation = Vector4(volume->rotation()->x(),
-														volume->rotation()->y(),
-														volume->rotation()->z(),
-														volume->rotation()->w());
-
-		room->triggerVolumes[number].Scale = Vector3(volume->scale()->x(),
-													 volume->scale()->y(),
-													 volume->scale()->z());
+		room->triggerVolumes[number].Position = ToVector3(volume->position());
+		room->triggerVolumes[number].Rotation = ToVector4(volume->rotation());
+		room->triggerVolumes[number].Scale = ToVector3(volume->scale());
 
 		int triggerer = volume->triggerer();
 		if (triggerer >= 0)
@@ -1357,14 +1286,14 @@ bool SaveGame::Load(int slot)
 	for (int i = 0; i < s->fixed_cameras()->size(); i++)
 	{
 		if (i < g_Level.Cameras.size())
-			g_Level.Cameras[i].flags = s->fixed_cameras()->Get(i)->flags();
+			g_Level.Cameras[i].Flags = s->fixed_cameras()->Get(i)->flags();
 	}
 
 	// Sinks 
 	for (int i = 0; i < s->sinks()->size(); i++)
 	{
 		if (i < g_Level.Sinks.size())
-			g_Level.Sinks[i].strength = s->sinks()->Get(i)->flags();
+			g_Level.Sinks[i].Strength = s->sinks()->Get(i)->flags();
 	}
 
 	// Flyby cameras 
@@ -1375,9 +1304,6 @@ bool SaveGame::Load(int slot)
 	}
 
 	ZeroMemory(&Lara, sizeof(LaraInfo));
-
-	// Items
-	InitialiseItemArray(NUM_ITEMS);
 
 	NextItemFree = s->next_item_free();
 	NextItemActive = s->next_item_active();
@@ -1410,17 +1336,10 @@ bool SaveGame::Load(int slot)
 
 		g_GameScriptEntities->TryAddColliding(i);
 
-		item->Pose.Position.x = savedItem->position()->x_pos();
-		item->Pose.Position.y = savedItem->position()->y_pos();
-		item->Pose.Position.z = savedItem->position()->z_pos();
-		item->Pose.Orientation.x = savedItem->position()->x_rot();
-		item->Pose.Orientation.y = savedItem->position()->y_rot();
-		item->Pose.Orientation.z = savedItem->position()->z_rot();
-
+		item->Pose = ToPHD(savedItem->pose());
 		item->RoomNumber = savedItem->room_number();
 
-		item->Animation.Velocity = savedItem->velocity();
-		item->Animation.VerticalVelocity = savedItem->vertical_velocity();
+		item->Animation.Velocity = ToVector3(savedItem->velocity());
 
 		if (item->ObjectNumber == ID_LARA && !dynamicItem)
 		{
@@ -1454,10 +1373,7 @@ bool SaveGame::Load(int slot)
 		item->Flags = savedItem->flags();
 
 		// Color
-		item->Color = Vector4(savedItem->color()->x(),
-							  savedItem->color()->y(),
-							  savedItem->color()->z(),
-							  savedItem->color()->w());
+		item->Color = ToVector4(savedItem->color());
 
 		// Carried item
 		item->CarriedItem = savedItem->carried_item();
@@ -1591,12 +1507,7 @@ bool SaveGame::Load(int slot)
 			kayak->FrontVerticalVelocity = savedKayak->front_vertical_velocity();
 			kayak->LeftRightPaddleCount = savedKayak->left_right_count();
 			kayak->LeftVerticalVelocity = savedKayak->left_vertical_velocity();
-			kayak->OldPose.Position.x = savedKayak->old_pos()->x_pos();
-			kayak->OldPose.Position.y = savedKayak->old_pos()->y_pos();
-			kayak->OldPose.Position.z = savedKayak->old_pos()->z_pos();
-			kayak->OldPose.Orientation.x = savedKayak->old_pos()->x_rot();
-			kayak->OldPose.Orientation.y = savedKayak->old_pos()->y_rot();
-			kayak->OldPose.Orientation.z = savedKayak->old_pos()->z_rot();
+			kayak->OldPose = ToPHD(savedKayak->old_pos());
 			kayak->RightVerticalVelocity = savedKayak->right_vertical_velocity();
 			kayak->TrueWater = savedKayak->true_water();
 			kayak->Turn = savedKayak->turn();
@@ -1669,14 +1580,9 @@ bool SaveGame::Load(int slot)
 		auto* bat = &Bats[i];
 
 		bat->On = batInfo->on();
-		bat->Counter = batInfo->counter();
+		bat->Counter = batInfo->flags();
 		bat->RoomNumber = batInfo->room_number();
-		bat->Pose.Position.x = batInfo->x();
-		bat->Pose.Position.y = batInfo->y();
-		bat->Pose.Position.z = batInfo->z();
-		bat->Pose.Orientation.x = batInfo->x_rot();
-		bat->Pose.Orientation.y = batInfo->y_rot();
-		bat->Pose.Orientation.z = batInfo->z_rot();
+		bat->Pose = ToPHD(batInfo->pose());
 	}
 
 	for (int i = 0; i < s->rats()->size(); i++)
@@ -1687,12 +1593,7 @@ bool SaveGame::Load(int slot)
 		rat->On = ratInfo->on();
 		rat->Flags = ratInfo->flags();
 		rat->RoomNumber = ratInfo->room_number();
-		rat->Pose.Position.x = ratInfo->x();
-		rat->Pose.Position.y = ratInfo->y();
-		rat->Pose.Position.z = ratInfo->z();
-		rat->Pose.Orientation.x = ratInfo->x_rot();
-		rat->Pose.Orientation.y = ratInfo->y_rot();
-		rat->Pose.Orientation.z = ratInfo->z_rot();
+		rat->Pose = ToPHD(ratInfo->pose());
 	}
 
 	for (int i = 0; i < s->spiders()->size(); i++)
@@ -1703,28 +1604,18 @@ bool SaveGame::Load(int slot)
 		spider->On = spiderInfo->on();
 		spider->Flags = spiderInfo->flags();
 		spider->RoomNumber = spiderInfo->room_number();
-		spider->Pose.Position.x = spiderInfo->x();
-		spider->Pose.Position.y = spiderInfo->y();
-		spider->Pose.Position.z = spiderInfo->z();
-		spider->Pose.Orientation.x = spiderInfo->x_rot();
-		spider->Pose.Orientation.y = spiderInfo->y_rot();
-		spider->Pose.Orientation.z = spiderInfo->z_rot();
+		spider->Pose = ToPHD(spiderInfo->pose());
 	}
 
 	for (int i = 0; i < s->scarabs()->size(); i++)
 	{
 		auto beetleInfo = s->scarabs()->Get(i);
-		auto* Beetle = &BeetleSwarm[i];
+		auto* beetle = &BeetleSwarm[i];
 
-		Beetle->On = beetleInfo->on();
-		Beetle->Flags = beetleInfo->flags();
-		Beetle->RoomNumber = beetleInfo->room_number();
-		Beetle->Pose.Position.x = beetleInfo->x();
-		Beetle->Pose.Position.y = beetleInfo->y();
-		Beetle->Pose.Position.z = beetleInfo->z();
-		Beetle->Pose.Orientation.x = beetleInfo->x_rot();
-		Beetle->Pose.Orientation.y = beetleInfo->y_rot();
-		Beetle->Pose.Orientation.z = beetleInfo->z_rot();
+		beetle->On = beetleInfo->on();
+		beetle->Flags = beetleInfo->flags();
+		beetle->RoomNumber = beetleInfo->room_number();
+		beetle->Pose = ToPHD(beetleInfo->pose());
 	}
 
 	NextFxFree = s->next_fx_free();
@@ -1734,7 +1625,7 @@ bool SaveGame::Load(int slot)
 	{
 		auto& fx = EffectList[i];
 		auto fx_saved = s->fxinfos()->Get(i);
-		fx.pos = ToPHD(fx_saved->pos());
+		fx.pos = ToPHD(fx_saved->pose());
 		fx.roomNumber = fx_saved->room_number();
 		fx.objectNumber = fx_saved->object_number();
 		fx.nextFx = fx_saved->next_fx();
@@ -1743,7 +1634,7 @@ bool SaveGame::Load(int slot)
 		fx.fallspeed = fx_saved->fall_speed();
 		fx.frameNumber = fx_saved->frame_number();
 		fx.counter = fx_saved->counter();
-		fx.shade = fx_saved->shade();
+		fx.color = ToVector4(fx_saved->color());
 		fx.flag1 = fx_saved->flag1();
 		fx.flag2 = fx_saved->flag2();
 	}
@@ -1865,9 +1756,6 @@ bool SaveGame::Load(int slot)
 	Lara.ExtraTorsoRot.z = s->lara()->extra_torso_rot()->x();
 	Lara.ExtraTorsoRot.y = s->lara()->extra_torso_rot()->y();
 	Lara.ExtraTorsoRot.z = s->lara()->extra_torso_rot()->z();
-	Lara.ExtraVelocity.x = s->lara()->extra_velocity()->x();
-	Lara.ExtraVelocity.y = s->lara()->extra_velocity()->y();
-	Lara.ExtraVelocity.z = s->lara()->extra_velocity()->z();
 	Lara.WaterCurrentActive = s->lara()->water_current_active();
 	Lara.WaterCurrentPull.x = s->lara()->water_current_pull()->x();
 	Lara.WaterCurrentPull.y = s->lara()->water_current_pull()->y();
@@ -1901,18 +1789,10 @@ bool SaveGame::Load(int slot)
 	Lara.LeftArm.FrameBase = s->lara()->left_arm()->frame_base();
 	Lara.LeftArm.FrameNumber = s->lara()->left_arm()->frame_number();
 	Lara.LeftArm.Locked = s->lara()->left_arm()->locked();
-	Lara.LeftArm.Orientation.x = s->lara()->left_arm()->rotation()->x();
-	Lara.LeftArm.Orientation.y = s->lara()->left_arm()->rotation()->y();
-	Lara.LeftArm.Orientation.z = s->lara()->left_arm()->rotation()->z();
+	Lara.LeftArm.Orientation = ToVector3Shrt(s->lara()->left_arm()->rotation());
 	Lara.Location = s->lara()->location();
 	Lara.LocationPad = s->lara()->location_pad();
-	Lara.NextCornerPos = PHD_3DPOS(
-		s->lara()->next_corner_position()->x(),
-		s->lara()->next_corner_position()->y(),
-		s->lara()->next_corner_position()->z(),
-		s->lara()->next_corner_rotation()->x(),
-		s->lara()->next_corner_rotation()->y(),
-		s->lara()->next_corner_rotation()->z());
+	Lara.NextCornerPos = ToPHD(s->lara()->next_corner_pose());
 	Lara.PoisonPotency = s->lara()->poison_potency();
 	Lara.ProjectedFloorHeight = s->lara()->projected_floor_height();
 	Lara.RightArm.AnimNumber = s->lara()->right_arm()->anim_number();
@@ -1921,9 +1801,7 @@ bool SaveGame::Load(int slot)
 	Lara.RightArm.FrameBase = s->lara()->right_arm()->frame_base();
 	Lara.RightArm.FrameNumber = s->lara()->right_arm()->frame_number();
 	Lara.RightArm.Locked = s->lara()->right_arm()->locked();
-	Lara.RightArm.Orientation.x = s->lara()->right_arm()->rotation()->x();
-	Lara.RightArm.Orientation.y = s->lara()->right_arm()->rotation()->y();
-	Lara.RightArm.Orientation.z = s->lara()->right_arm()->rotation()->z();
+	Lara.RightArm.Orientation = ToVector3Shrt(s->lara()->right_arm()->rotation());
 	Lara.Torch.IsLit = s->lara()->torch()->is_lit();
 	Lara.Torch.State = (TorchState)s->lara()->torch()->state();
 	Lara.Control.Rope.Segment = s->lara()->control()->rope()->segment();
@@ -2001,61 +1879,25 @@ bool SaveGame::Load(int slot)
 		
 		for (int i = 0; i < ROPE_SEGMENTS; i++)
 		{
-			rope->segment[i] = Vector3Int(
-				s->rope()->segments()->Get(i)->x(),
-				s->rope()->segments()->Get(i)->y(),
-				s->rope()->segments()->Get(i)->z());
-
-			rope->normalisedSegment[i] = Vector3Int(
-				s->rope()->normalised_segments()->Get(i)->x(),
-				s->rope()->normalised_segments()->Get(i)->y(),
-				s->rope()->normalised_segments()->Get(i)->z());
-
-			rope->meshSegment[i] = Vector3Int(
-				s->rope()->mesh_segments()->Get(i)->x(),
-				s->rope()->mesh_segments()->Get(i)->y(),
-				s->rope()->mesh_segments()->Get(i)->z());
-
-			rope->coords[i] = Vector3Int(
-				s->rope()->coords()->Get(i)->x(),
-				s->rope()->coords()->Get(i)->y(),
-				s->rope()->coords()->Get(i)->z());
-
-			rope->velocity[i] = Vector3Int(
-				s->rope()->velocities()->Get(i)->x(),
-				s->rope()->velocities()->Get(i)->y(),
-				s->rope()->velocities()->Get(i)->z());
+			rope->segment[i] = ToVector3Int(s->rope()->segments()->Get(i));
+			rope->normalisedSegment[i] = ToVector3Int(s->rope()->normalised_segments()->Get(i));
+			rope->meshSegment[i] = ToVector3Int(s->rope()->mesh_segments()->Get(i));
+			rope->coords[i] = ToVector3Int(s->rope()->coords()->Get(i));
+			rope->velocity[i] = ToVector3Int(s->rope()->velocities()->Get(i));
 		}
 
 		rope->coiled = s->rope()->coiled();
 		rope->active = s->rope()->active();
-		rope->position = Vector3Int(
-			s->rope()->position()->x(),
-			s->rope()->position()->y(),
-			s->rope()->position()->z());
 
-		CurrentPendulum.position = Vector3Int(
-			s->pendulum()->position()->x(),
-			s->pendulum()->position()->y(),
-			s->pendulum()->position()->z());
-
-		CurrentPendulum.velocity = Vector3Int(
-			s->pendulum()->velocity()->x(),
-			s->pendulum()->velocity()->y(),
-			s->pendulum()->velocity()->z());
+		rope->position = ToVector3Int(s->rope()->position());
+		CurrentPendulum.position = ToVector3Int(s->pendulum()->position());
+		CurrentPendulum.velocity = ToVector3Int(s->pendulum()->velocity());
 
 		CurrentPendulum.node = s->pendulum()->node();
 		CurrentPendulum.rope = rope;
 
-		AlternatePendulum.position = Vector3Int(
-			s->alternate_pendulum()->position()->x(),
-			s->alternate_pendulum()->position()->y(),
-			s->alternate_pendulum()->position()->z());
-
-		AlternatePendulum.velocity = Vector3Int(
-			s->alternate_pendulum()->velocity()->x(),
-			s->alternate_pendulum()->velocity()->y(),
-			s->alternate_pendulum()->velocity()->z());
+		AlternatePendulum.position = ToVector3Int(s->alternate_pendulum()->position());
+		AlternatePendulum.velocity = ToVector3Int(s->alternate_pendulum()->velocity());
 
 		AlternatePendulum.node = s->alternate_pendulum()->node();
 		AlternatePendulum.rope = rope;
@@ -2084,16 +1926,37 @@ bool SaveGame::Load(int slot)
 			{
 				auto tab = var->u_as_tab()->keys_vals();
 				auto& loadedTab = loadedVars.emplace_back(IndexTable{});
-				
+
 				for (auto const& p : *tab)
 				{
 					std::get<IndexTable>(loadedTab).push_back(std::make_pair(p->key(), p->val()));
 				}
 			}
+			else if (var->u_type() == Save::VarUnion::vec3)
+			{
+				loadedVars.push_back(ToVector3Int(var->u_as_vec3()->vec()));
+			}
+			else if (var->u_type() == Save::VarUnion::funcName)
+			{
+				loadedVars.push_back(FuncName{var->u_as_funcName()->str()->str()});
+			}
+
 		}
 	}
 
 	g_GameScript->SetVariables(loadedVars);
+
+	std::vector<std::string> callbacksPreControlVec;
+	auto callbacksPreControlOffsetVec = s->callbacks_pre_control();
+	for (auto const& s : *callbacksPreControlOffsetVec)
+		callbacksPreControlVec.push_back(s->str());
+
+	std::vector<std::string> callbacksPostControlVec;
+	auto callbacksPostControlOffsetVec = s->callbacks_post_control();
+	for (auto const& s : *callbacksPostControlOffsetVec)
+		callbacksPostControlVec.push_back(s->str());
+
+	g_GameScript->SetCallbackStrings(callbacksPreControlVec, callbacksPostControlVec);
 
 	return true;
 }

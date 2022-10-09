@@ -14,7 +14,7 @@
 using namespace TEN::Math::Random;
 using std::vector;
 
-namespace TEN::Entities::TR2
+namespace TEN::Entities::Creatures::TR2
 {
 	constexpr auto BIRD_MONSTER_ATTACK_DAMAGE = 200;
 	constexpr auto BIRD_MONSTER_SLAM_CRUSH_ATTACK_RANGE = SQUARE(SECTOR(1));
@@ -29,7 +29,7 @@ namespace TEN::Entities::TR2
 
 	enum BirdMonsterState
 	{
-		BMONSTER_STATE_NONE = 0,
+		// No state 0.
 		BMONSTER_STATE_IDLE = 1,
 		BMONSTER_STATE_WALK_FORWARD = 2,
 		BMONSTER_STATE_SLAM_ATTACK_START = 3,
@@ -147,7 +147,7 @@ namespace TEN::Entities::TR2
 				break;
 
 			case BMONSTER_STATE_SLAM_ATTACK_START:
-				creature->Flags = NULL;
+				creature->Flags = 0;
 
 				if (AI.ahead && AI.distance < BIRD_MONSTER_SLAM_CRUSH_ATTACK_RANGE)
 					item->Animation.TargetState = BMONSTER_STATE_SLAM_ATTACK_CONTINUE;
@@ -157,7 +157,7 @@ namespace TEN::Entities::TR2
 				break;
 
 			case BMONSTER_STATE_PUNCH_ATTACK_START:
-				creature->Flags = NULL;
+				creature->Flags = 0;
 
 				if (AI.ahead && AI.distance < BIRD_MONSTER_PUNCH_ATTACK_RANGE)
 					item->Animation.TargetState = BMONSTER_STATE_PUNCH_ATTACK_RIGHT_CONTINUE;
@@ -167,7 +167,7 @@ namespace TEN::Entities::TR2
 				break;
 
 			case BMONSTER_STATE_CRUSH_ATTACK_START:
-				creature->Flags = NULL;
+				creature->Flags = 0;
 
 				if (AI.ahead && AI.distance < BIRD_MONSTER_SLAM_CRUSH_ATTACK_RANGE)
 					item->Animation.TargetState = BMONSTER_STATE_CRUSH_ATTACK_CONTINUE;

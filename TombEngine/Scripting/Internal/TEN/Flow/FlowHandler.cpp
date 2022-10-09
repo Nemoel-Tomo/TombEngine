@@ -6,10 +6,11 @@
 #include "Sound/sound.h"
 #include "Game/savegame.h"
 #include "Flow/InventoryItem/InventoryItem.h"
-#include "InventorySlots.h"
 #include "Game/gui.h"
+#include "Logic/LevelFunc.h"
 #include "Vec3/Vec3.h"
 #include "Objects/ScriptInterfaceObjectsHandler.h"
+#include "Strings/ScriptInterfaceStringsHandler.h"
 #include "Specific/trutils.h"
 
 /***
@@ -46,6 +47,50 @@ Add a level to the Flow.
 */
 	table_flow.set_function(ScriptReserved_AddLevel, &FlowHandler::AddLevel, this);
 
+/*** GetLevel.
+Returns the level indicated by the parameter id.
+@function GetLevel
+@tparam int id of the level
+@treturn Level the level indicated by the id
+*/
+	table_flow.set_function(ScriptReserved_GetLevel, &FlowHandler::GetLevel, this);
+
+/*** GetCurrentLevel.
+Returns the level that the game control is running in that moment.
+@function GetCurrentLevel
+@treturn Level the current level
+*/
+	table_flow.set_function(ScriptReserved_GetCurrentLevel, &FlowHandler::GetCurrentLevel, this);
+
+/*** EndLevel.
+Finish level, with optional level index provided. If level index is not provided or is zero, jumps
+to next level. If level index is more than level count, jumps to title.
+@function EndLevel
+@tparam int index (optional) level index.
+*/
+	table_flow.set_function(ScriptReserved_EndLevel, &FlowHandler::EndLevel, this);
+
+/*** GetSecretCount.
+Returns current game secret count.
+@function GetSecretCount
+@treturn Current game secret count.
+*/
+	table_flow.set_function(ScriptReserved_GetSecretCount, &FlowHandler::GetSecretCount, this);
+
+/*** SetSecretCount.
+Sets current secret count, overwriting existing one.
+@function SetSecretCount
+@tparam int count new secret count.
+*/
+	table_flow.set_function(ScriptReserved_SetSecretCount, &FlowHandler::SetSecretCount, this);
+
+/*** AddSecret.
+Adds one secret to game secret count and also plays secret music track.
+@function AddSecret
+@tparam int index an index of current level's secret (must be from 0 to 7).
+*/
+	table_flow.set_function(ScriptReserved_AddSecret, &FlowHandler::AddSecret, this);
+
 /*** Image to show when loading the game.
 Must be a .jpg or .png image.
 @function SetIntroImagePath
@@ -60,15 +105,6 @@ __(not yet implemented)__
 @tparam string path the path to the image, relative to the TombEngine exe
 */
 	table_flow.set_function(ScriptReserved_SetTitleScreenImagePath, &FlowHandler::SetTitleScreenImagePath, this);
-
-/*** Maximum draw distance.
-The maximum draw distance, in sectors (blocks), of any level in the game.
-This is equivalent to TRNG's WorldFarView variable.
-__(not yet implemented)__
-@function SetFarView
-@tparam byte farview Number of sectors. Must be in the range [1, 127].
-*/
-	table_flow.set_function(ScriptReserved_SetFarView, &FlowHandler::SetGameFarView, this);
 
 /*** settings.lua.
 These functions are called in settings.lua, a file which holds your local settings.
@@ -121,10 +157,9 @@ Specify which translations in the strings table correspond to which languages.
 	Animations::Register(table_flow);
 	Settings::Register(table_flow);
 	Fog::Register(table_flow);
-
+	
 	m_handler.MakeReadOnlyTable(table_flow, ScriptReserved_WeatherType, kWeatherTypes);
 	m_handler.MakeReadOnlyTable(table_flow, ScriptReserved_LaraType, kLaraTypes);
-	m_handler.MakeReadOnlyTable(table_flow, ScriptReserved_InvItem, kInventorySlots);
 	m_handler.MakeReadOnlyTable(table_flow, ScriptReserved_RotationAxis, kRotAxes);
 	m_handler.MakeReadOnlyTable(table_flow, ScriptReserved_ItemAction, kItemActions);
 	m_handler.MakeReadOnlyTable(table_flow, ScriptReserved_ErrorMode, kErrorModes);
@@ -171,19 +206,6 @@ void FlowHandler::SetTitleScreenImagePath(std::string const& path)
 	TitleScreenImagePath = path;
 }
 
-void FlowHandler::SetGameFarView(short val)
-{
-	bool cond = val <= 127 && val >= 1;
-	std::string msg{ "Game far view value must be in the range [1, 255]." };
-	if (!ScriptAssert(cond, msg))
-	{
-		ScriptWarn("Setting game far view to 32.");
-		GameFarView = 32;
-	}
-	else
-		GameFarView = val;
-}
-
 void FlowHandler::LoadFlowScript()
 {
 	m_handler.ExecuteScript("Scripts/Gameflow.lua");
@@ -211,6 +233,11 @@ Level* FlowHandler::GetLevel(int id)
 	return Levels[id];
 }
 
+Level* FlowHandler::GetCurrentLevel()
+{
+	return Levels[CurrentLevel];
+}
+
 int	FlowHandler::GetNumLevels() const
 {
 	return Levels.size();
@@ -230,7 +257,49 @@ int FlowHandler::GetLevelNumber(std::string const& fileName)
 			return i;
 	}
 
+	TENLog("Specified level filename was not found in script. Level won't be loaded. Please edit level filename in gameflow.lua.");
 	return -1;
+}
+
+void FlowHandler::EndLevel(std::optional<int> nextLevel)
+{
+	int index = (nextLevel.has_value() && nextLevel.value() != 0) ? nextLevel.value() : CurrentLevel + 1;
+	LevelComplete = index;
+}
+
+int FlowHandler::GetSecretCount() const
+{
+	return Statistics.Game.Secrets;
+}
+
+void FlowHandler::SetSecretCount(int secretsNum)
+{
+	if (secretsNum > UCHAR_MAX)
+		return;
+
+	Statistics.Game.Secrets = secretsNum;
+}
+
+void FlowHandler::AddSecret(int levelSecretIndex)
+{
+	if (levelSecretIndex > 7)
+	{
+		TENLog("Current maximum amount of secrets per level is 7.", LogLevel::Warning);
+		return;
+	}
+
+	if (!(Statistics.Level.Secrets & (1 << levelSecretIndex)))
+	{
+		if (Statistics.Game.Secrets >= UCHAR_MAX)
+		{
+			TENLog("Maximum amount of game secrets is already reached!", LogLevel::Warning);
+			return;
+		}
+
+		PlaySecretTrack();
+		Statistics.Level.Secrets |= (1 << levelSecretIndex);
+		Statistics.Game.Secrets++;
+	}
 }
 
 bool FlowHandler::IsFlyCheatEnabled() const
@@ -242,7 +311,7 @@ bool FlowHandler::DoFlow()
 {
 	// We start with the title level, if no other index is specified
 	if (CurrentLevel == -1)
-		CurrentLevel = 0;
+		CurrentLevel = SystemNameHash = 0;
 
 	SelectedLevelForNewGame = 0;
 	SelectedSaveGame = 0;
@@ -260,7 +329,17 @@ bool FlowHandler::DoFlow()
 
 		if (CurrentLevel == 0)
 		{
-			status = DoTitle(0, level->AmbientTrack);
+			try
+			{
+				status = DoTitle(0, level->AmbientTrack);
+			}
+			catch (TENScriptException const& e)
+			{
+				std::string msg = std::string{ "A Lua error occurred while running the title level; " } + __func__ + ": " + e.what();
+				TENLog(msg, LogLevel::Error, LogConfig::All);
+				ShutdownTENLog();
+				throw;
+			}
 		}
 		else
 		{
@@ -284,7 +363,16 @@ bool FlowHandler::DoFlow()
 				}
 			}
 
-			status = DoLevel(CurrentLevel, level->AmbientTrack, loadFromSavegame);
+			try
+			{
+				status = DoLevel(CurrentLevel, level->AmbientTrack, loadFromSavegame);
+			}
+			catch (TENScriptException const& e) 
+			{
+				std::string msg = std::string{ "A Lua error occurred while running a level; " } + __func__ + ": " + e.what();
+				TENLog(msg, LogLevel::Error, LogConfig::All);
+				status = GameStatus::ExitToTitle;
+			}
 			loadFromSavegame = false;
 		}
 
@@ -329,7 +417,3 @@ bool FlowHandler::CanPlayAnyLevel() const
 	return PlayAnyLevel;
 }
 
-short FlowHandler::GetGameFarView() const
-{
-	return GameFarView;
-}

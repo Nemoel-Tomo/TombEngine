@@ -1,20 +1,21 @@
 #include "framework.h"
-#include "tr5_chef.h"
+#include "Objects/TR5/Entity/tr5_chef.h"
+
 #include "Game/items.h"
 #include "Game/control/box.h"
 #include "Game/effects/effects.h"
 #include "Game/effects/tomb4fx.h"
-#include "Game/people.h"
-#include "Specific/setup.h"
-#include "Specific/level.h"
+#include "Game/itemdata/creature_info.h"
 #include "Game/Lara/lara.h"
 #include "Game/misc.h"
+#include "Game/people.h"
 #include "Sound/sound.h"
-#include "Game/itemdata/creature_info.h"
+#include "Specific/level.h"
+#include "Specific/setup.h"
 
-namespace TEN::Entities::TR5
+namespace TEN::Entities::Creatures::TR5
 {
-	BiteInfo ChefBite = { 0, 200, 0 ,13 };
+	const auto ChefBite = BiteInfo(Vector3(0.0f, 200.0f, 0.0f), 13);
 
 	// TODO
 	enum ChefState
@@ -122,7 +123,7 @@ namespace TEN::Entities::TR5
 					AI.distance < pow(SECTOR(1.5f), 2) &&
 					(item->TouchBits ||
 						item->HitStatus ||
-						LaraItem->Animation.Velocity > 15 ||
+						LaraItem->Animation.Velocity.z > 15 ||
 						TargetVisible(item, &aiLaraInfo)))
 				{
 					item->Animation.TargetState = CHEF_STATE_TURN_180;
@@ -164,7 +165,7 @@ namespace TEN::Entities::TR5
 						if (item->Animation.FrameNumber > g_Level.Anims[item->Animation.AnimNumber].frameBase + 10)
 						{
 							DoDamage(creature->Enemy, 80);
-							CreatureEffect2(item, &ChefBite, 20, item->Pose.Orientation.y, DoBloodSplat);
+							CreatureEffect2(item, ChefBite, 20, item->Pose.Orientation.y, DoBloodSplat);
 							SoundEffect(SFX_TR4_LARA_THUD, &item->Pose);
 							creature->Flags = 1;
 						}

@@ -22,20 +22,20 @@ namespace TEN::Entities::TR4
 {
 	constexpr auto BIG_SCORPION_ATTACK_DAMAGE		   = 120;
 	constexpr auto BIG_SCORPION_TROOP_ATTACK_DAMAGE	   = 15;
-	constexpr auto BIG_SCORPION_STINGER_POISON_POTENCY = 8;
+	constexpr auto BIG_SCORPION_STINGER_POISON_POTENCY = 16;
 
 	constexpr auto BIG_SCORPION_ATTACK_RANGE = SQUARE(SECTOR(1.35));
 	constexpr auto BIG_SCORPION_RUN_RANGE	 = SQUARE(SECTOR(2));
 
-	const vector<int> BigScorpionAttackJoints = { 8, 20, 21, 23, 24 };
 	const auto BigScorpionBite1 = BiteInfo(Vector3::Zero, 8);
 	const auto BigScorpionBite2 = BiteInfo(Vector3::Zero, 23);
+	const vector<int> BigScorpionAttackJoints = { 8, 20, 21, 23, 24 };
 
 	int CutSeqNum;
 
 	enum BigScorpionState
 	{
-		BSCORPION_STATE_NONE = 0,
+		// No state 0.
 		BSCORPION_STATE_IDLE = 1,
 		BSCORPION_STATE_WALK_FORWARD = 2,
 		BSCORPION_STATE_RUN_FORWARD = 3,
@@ -76,6 +76,7 @@ namespace TEN::Entities::TR4
 			return;
 
 		auto* item = &g_Level.Items[itemNumber];
+		auto* object = &Objects[item->ObjectNumber];
 		auto* creature = GetCreatureInfo(item);
 
 		short angle = 0;
@@ -237,12 +238,17 @@ namespace TEN::Entities::TR4
 				if (creature->Flags != 0)
 					break;
 
-				if (creature->Enemy && !creature->Enemy->IsLara() &&
-					AI.distance < BIG_SCORPION_ATTACK_RANGE)
+				if (creature->Enemy && !creature->Enemy->IsLara() && AI.distance < BIG_SCORPION_ATTACK_RANGE)
 				{
 					DoDamage(creature->Enemy, BIG_SCORPION_TROOP_ATTACK_DAMAGE);
 					CreatureEffect2(item, BigScorpionBite1, 10, item->Pose.Orientation.y - ANGLE(180.0f), DoBloodSplat);
 					creature->Flags = 1;
+
+					if (creature->Enemy->HitPoints <= 0)
+					{
+						item->Animation.TargetState = BSCORPION_STATE_KILL;
+						creature->MaxTurn = 0;
+					}
 				}
 				else if (item->TestBits(JointBitType::Touch, BigScorpionAttackJoints))
 				{
@@ -259,6 +265,13 @@ namespace TEN::Entities::TR4
 						CreatureEffect2(item, BigScorpionBite2, 10, item->Pose.Orientation.y - ANGLE(180.0f), DoBloodSplat);
 
 					creature->Flags = 1;
+
+					if (creature->Enemy->IsLara() && creature->Enemy->HitPoints <= 0)
+					{
+						CreatureKill(item, BSCORPION_ANIM_KILL, BSCORPION_STATE_KILL, LA_BIG_SCORPION_DEATH);
+						creature->MaxTurn = 0;
+						return;
+					}
 				}
 
 				break;
@@ -269,6 +282,13 @@ namespace TEN::Entities::TR4
 				if (item->Animation.FrameNumber == g_Level.Anims[item->Animation.AnimNumber].frameEnd)
 					item->TriggerFlags++;
 
+				if ((creature->Enemy != nullptr && creature->Enemy->HitPoints <= 0) ||
+					item->TriggerFlags > 6)
+				{
+					item->Animation.TargetState = BSCORPION_STATE_IDLE;
+					creature->MaxTurn = 0;
+				}
+
 				break;
 
 			default:
@@ -276,18 +296,10 @@ namespace TEN::Entities::TR4
 			}
 		}
 
-		if ((creature->Enemy != nullptr && creature->Enemy->HitPoints <= 0) ||
-			item->TriggerFlags > 6)
-		{
-			// TODO: Allow scorpion to do the kill animation. -- TokyoSU, 3/8/2022
-			//CreatureKill(item, BSCORPION_ANIM_KILL, BSCORPION_STATE_KILL, 0);
-			item->Animation.TargetState = BSCORPION_STATE_IDLE;
-			creature->MaxTurn = 0;
-		}
-
 		if (!CutSeqNum)
 			CreatureAnimation(itemNumber, angle, 0);
 
-		CalculateItemRotationToSurface(item, 5.0f);
+		auto radius = Vector2(object->radius, object->radius * 1.33f);
+		AlignEntityToSurface(item, radius);
 	}
 }

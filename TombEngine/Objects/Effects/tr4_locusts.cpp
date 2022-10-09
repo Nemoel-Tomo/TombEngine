@@ -15,7 +15,7 @@ namespace TEN::Entities::TR4
 {
 	LOCUST_INFO Locusts[MAX_LOCUSTS];
 
-	int CreateLocust(void)
+	int CreateLocust()
 	{
 		for (int i = 0; i < MAX_LOCUSTS; i++)
 		{
@@ -112,7 +112,7 @@ namespace TEN::Entities::TR4
 		}
 	}
 
-	void UpdateLocusts(void)
+	void UpdateLocusts()
 	{
 		for (int i = 0; i < MAX_LOCUSTS; i++)
 		{
@@ -191,7 +191,7 @@ namespace TEN::Entities::TR4
 				locust->pos.Position.y += locust->randomRotation * phd_sin(-locust->pos.Orientation.x);
 				locust->pos.Position.z += locust->randomRotation * phd_cos(locust->pos.Orientation.x) * phd_cos(locust->pos.Orientation.y);
 				
-				if (ItemNearTarget(&locust->pos, LaraItem, CLICK(1) / 2))
+				if (ItemNearTarget(&locust->pos.Position, LaraItem, CLICK(1) / 2))
 				{
 					TriggerBlood(locust->pos.Position.x, locust->pos.Position.y, locust->pos.Position.z, 2 * GetRandomControl(), 2);
 					DoDamage(LaraItem, LOCUST_LARA_DAMAGE);
@@ -203,7 +203,13 @@ namespace TEN::Entities::TR4
 		}
 	}
 
-	void DrawLocust(void)
+	void ClearLocusts()
+	{
+		for (int i = 0; i < MAX_LOCUSTS; i++)
+			Locusts[i].on = false;
+	}
+
+	void DrawLocust()
 	{
 		// TODO: no render for the locusts !
 	}

@@ -1,5 +1,7 @@
 #pragma once
 
+using std::string;
+
 // TODO: Possibly rename these vector structs to more common standards later:
 // Vector2i, Vector3i, Vector3s. -- Sezz 2022.07.23
 struct Vector2Int
@@ -41,14 +43,24 @@ struct Vector3Int
 		this->z = z;
 	}
 
-	Vector3Int(Vector3 v)
+	Vector3Int(Vector3 vector)
 	{
-		this->x = int(v.x);
-		this->y = int(v.y);
-		this->z = int(v.z);
+		this->x = int(vector.x);
+		this->y = int(vector.y);
+		this->z = int(vector.z);
 	}
 
-	Vector3 ToVector3()
+	static float Distance(const Vector3Int& origin, const Vector3Int& target)
+	{
+		return Vector3::Distance(origin.ToVector3(), target.ToVector3());
+	}
+	
+	static float DistanceSquared(const Vector3Int& origin, const Vector3Int& target)
+	{
+		return Vector3::DistanceSquared(origin.ToVector3(), target.ToVector3());
+	}
+
+	Vector3 ToVector3() const
 	{
 		return Vector3(x, y, z);
 	}
@@ -147,7 +159,7 @@ struct Vector3Shrt
 		this->z = z;
 	}
 
-	Vector3 ToVector3()
+	Vector3 ToVector3() const
 	{
 		return Vector3(x, y, z);
 	}
@@ -329,184 +341,147 @@ struct GameVector
 		this->boxNumber = 0;
 	}
 
-	GameVector(int xpos, int ypos, int zpos)
+	GameVector(int xPos, int yPos, int zPos)
 	{
-		this->x = xpos;
-		this->y = ypos;
-		this->z = zpos;
+		this->x = xPos;
+		this->y = yPos;
+		this->z = zPos;
 		this->roomNumber = 0;
 		this->boxNumber = 0;
 	}
 
-	GameVector(int xpos, int ypos, int zpos, short roomNumber)
+	GameVector(int xPos, int yPos, int zPos, short roomNumber)
 	{
-		this->x = xpos;
-		this->y = ypos;
-		this->z = zpos;
+		this->x = xPos;
+		this->y = yPos;
+		this->z = zPos;
 		this->roomNumber = roomNumber;
 		this->boxNumber = 0;
 	}
 
-	GameVector(int xpos, int ypos, int zpos, short roomNumber, short boxNumber)
+	GameVector(int xPos, int yPos, int zPos, short roomNumber, short boxNumber)
 	{
-		this->x = xpos;
-		this->y = ypos;
-		this->z = zpos;
+		this->x = xPos;
+		this->y = yPos;
+		this->z = zPos;
 		this->roomNumber = roomNumber;
 		this->boxNumber = boxNumber;
 	}
-};
 
-struct LEVEL_CAMERA_INFO
-{
-	int x;
-	int y;
-	int z;
-	int roomNumber;
-	int flags;
-	int speed;
-	std::string luaName;
-
-	LEVEL_CAMERA_INFO()
+	GameVector(const Vector3Int& pos)
 	{
-		this->x = 0;
-		this->y = 0;
-		this->z = 0;
+		this->x = pos.x;
+		this->y = pos.y;
+		this->z = pos.z;
 		this->roomNumber = 0;
-		this->flags = 0x0;
-		this->speed = 1;
+		this->boxNumber = 0;
 	}
 
-	LEVEL_CAMERA_INFO(int xpos, int ypos, int zpos)
+	GameVector(const Vector3Int& pos, short roomNumber)
 	{
-		this->x = xpos;
-		this->y = ypos;
-		this->z = zpos;
-		this->roomNumber = 0;
-		this->flags = 0x0;
-		this->speed = 1;
-	}
-
-	LEVEL_CAMERA_INFO(int xpos, int ypos, int zpos, short room)
-	{
-		this->x = xpos;
-		this->y = ypos;
-		this->z = zpos;
-		this->roomNumber = room;
-		this->flags = 0x0;
-		this->speed = 1;
-	}
-
-	LEVEL_CAMERA_INFO(int xpos, int ypos, int zpos, short flags, bool isFlags) // use isFlags to use flag instead of newdata !
-	{
-		this->x = xpos;
-		this->y = ypos;
-		this->z = zpos;
-		this->roomNumber = 0;
-		this->flags = flags;
-		this->speed = 1;
-	}
-
-	LEVEL_CAMERA_INFO(int xpos, int ypos, int zpos, short room, short newflags)
-	{
-		this->x = xpos;
-		this->y = ypos;
-		this->z = zpos;
-		this->roomNumber = room;
-		this->flags = newflags;
-		this->speed = 1;
+		this->x = pos.x;
+		this->y = pos.y;
+		this->z = pos.z;
+		this->roomNumber = roomNumber;
+		this->boxNumber = 0;
 	}
 };
 
-struct SINK_INFO
+struct LevelCameraInfo
 {
-	int x;
-	int y;
-	int z;
-	int strength;
-	int boxIndex;
-	std::string luaName;
+	Vector3Int Position = Vector3Int::Zero;
+	int RoomNumber		= 0;
+	int Flags			= 0;
+	int Speed			= 1;
+	string LuaName		= "";
 
-	SINK_INFO()
+	LevelCameraInfo()
 	{
-		this->x = 0;
-		this->y = 0;
-		this->z = 0;
-		this->strength = 0;
-		this->boxIndex = 0;
 	}
 
-	SINK_INFO(int xpos, int ypos, int zpos)
+	LevelCameraInfo(int xPos, int yPos, int zPos)
 	{
-		this->x = xpos;
-		this->y = ypos;
-		this->z = zpos;
-		this->strength = 0;
-		this->boxIndex = 0;
+		this->Position = Vector3Int(xPos, yPos, zPos);
 	}
 
-	SINK_INFO(int xpos, int ypos, int zpos, short strength)
+	LevelCameraInfo(int xPos, int yPos, int zPos, short roomNumber)
 	{
-		this->x = xpos;
-		this->y = ypos;
-		this->z = zpos;
-		this->strength = strength;
-		this->boxIndex = 0;
+		this->Position = Vector3Int(xPos, yPos, zPos);
+		this->RoomNumber = roomNumber;
 	}
 
-	SINK_INFO(int xpos, int ypos, int zpos, short strength, short boxIndex)
+	// Use isFlags to use flag instead of new data.
+	LevelCameraInfo(int xPos, int yPos, int zPos, short flags, bool isFlags)
 	{
-		this->x = xpos;
-		this->y = ypos;
-		this->z = zpos;
-		this->strength = strength;
-		this->boxIndex = boxIndex;
+		this->Position = Vector3Int(xPos, yPos, zPos);
+		this->Flags = flags;
+	}
+
+	LevelCameraInfo(int xPos, int yPos, int zPos, short roomNumber, short newflags)
+	{
+		this->Position = Vector3Int(xPos, yPos, zPos);
+		this->RoomNumber = roomNumber;
+		this->Flags = newflags;
 	}
 };
 
-struct SOUND_SOURCE_INFO
+struct SinkInfo
 {
-	int x;
-	int y;
-	int z;
-	int soundId;
-	int flags;
-	std::string luaName;
+	Vector3Int Position = Vector3Int::Zero;
+	int		   Strength = 0;
+	int		   BoxIndex = 0;
+	string	   LuaName	= "";
 
-	SOUND_SOURCE_INFO()
+	SinkInfo()
 	{
-		this->x = 0;
-		this->y = 0;
-		this->z = 0;
-		this->soundId = 0;
-		this->flags = 0x0;
 	}
 
-	SOUND_SOURCE_INFO(int xpos, int ypos, int zpos)
+	SinkInfo(int xPos, int yPos, int zPos)
 	{
-		this->x = xpos;
-		this->y = ypos;
-		this->z = zpos;
-		this->soundId = 0;
-		this->flags = 0x0;
+		this->Position = Vector3Int(xPos, yPos, zPos);
 	}
 
-	SOUND_SOURCE_INFO(int xpos, int ypos, int zpos, short soundId)
+	SinkInfo(int xPos, int yPos, int zPos, short strength)
 	{
-		this->x = xpos;
-		this->y = ypos;
-		this->z = zpos;
-		this->soundId = soundId;
-		this->flags = 0x0;
+		this->Position = Vector3Int(xPos, yPos, zPos);
+		this->Strength = strength;
 	}
 
-	SOUND_SOURCE_INFO(int xpos, int ypos, int zpos, short soundId, short newflags)
+	SinkInfo(int xPos, int yPos, int zPos, short strength, short boxIndex)
 	{
-		this->x = xpos;
-		this->y = ypos;
-		this->z = zpos;
-		this->soundId = soundId;
-		this->flags = newflags;
+		this->Position = Vector3Int(xPos, yPos, zPos);
+		this->Strength = strength;
+		this->BoxIndex = boxIndex;
+	}
+};
+
+struct SoundSourceInfo
+{
+	Vector3Int Position = Vector3Int::Zero;
+	int		   SoundID	= 0;
+	int		   Flags	= 0;
+	string	   LuaName	= "";
+
+	SoundSourceInfo()
+	{
+	}
+
+	SoundSourceInfo(int xPos, int yPos, int zPos)
+	{
+		this->Position = Vector3Int(xPos, yPos, zPos);
+	}
+
+	SoundSourceInfo(int xPos, int yPos, int zPos, short soundID)
+	{
+		this->Position = Vector3Int(xPos, yPos, zPos);
+		this->SoundID = soundID;
+	}
+
+	SoundSourceInfo(int xPos, int yPos, int zPos, short soundID, short newflags)
+	{
+		this->Position = Vector3Int(xPos, yPos, zPos);
+		this->SoundID = soundID;
+		this->Flags = newflags;
 	}
 };
 
@@ -516,14 +491,6 @@ struct VECTOR
 	int vy;
 	int vz;
 	int pad;
-};
-
-struct SVECTOR
-{
-	short vx;
-	short vy;
-	short vz;
-	short pad;
 };
 
 struct CVECTOR
@@ -573,6 +540,9 @@ struct BOUNDING_BOX
 	short Y2;
 	short Z1;
 	short Z2;
+
+	int Height() { return abs(Y2 - Y1); }
 };
 
-BOUNDING_BOX operator+(BOUNDING_BOX const& box, PHD_3DPOS const& vec);
+BOUNDING_BOX operator+(const BOUNDING_BOX& box, const PHD_3DPOS& pose);
+BOUNDING_BOX operator*(const BOUNDING_BOX& box, const float scale);

@@ -95,40 +95,23 @@ struct OVERLAP
 
 struct BiteInfo
 {
-	// TODO: Remove these in favour of the Vector3. -- Sezz
-	int	x = 0;
-	int	y = 0;
-	int	z = 0;
-
 	Vector3 Position = Vector3::Zero;
 	int		meshNum	 = 0;
 
 	BiteInfo()
 	{
-		this->x = 0;
-		this->y = 0;
-		this->z = 0;
-
 		this->Position = Vector3::Zero;
 		this->meshNum = 0;
 	}
 
 	BiteInfo(Vector3 pos, int meshNumber)
 	{
-		this->x = pos.x;
-		this->y = pos.y;
-		this->z = pos.z;
-
 		this->Position = pos;
 		this->meshNum = meshNumber;
 	}
 
 	BiteInfo(float xPos, float yPos, float zPos, int meshNumber)
 	{
-		this->x = xPos;
-		this->y = yPos;
-		this->z = zPos;
-
 		this->Position = Vector3(xPos, yPos, zPos);
 		this->meshNum = meshNumber;
 	}
@@ -178,9 +161,7 @@ void AlertNearbyGuards(ItemInfo* item);
 void AlertAllGuards(short itemNumber);
 void CreatureKill(ItemInfo* item, int killAnim, int killState, int laraKillState);
 short CreatureEffect2(ItemInfo* item, BiteInfo bite, short velocity, short angle, std::function<CreatureEffectFunction> func);
-short CreatureEffect2(ItemInfo* item, BiteInfo* bite, short velocity, short angle, std::function<CreatureEffectFunction> func);
 short CreatureEffect(ItemInfo* item, BiteInfo bite, std::function<CreatureEffectFunction> func);
-short CreatureEffect(ItemInfo* item, BiteInfo* bite, std::function<CreatureEffectFunction> func);
 void CreatureUnderwater(ItemInfo* item, int depth);
 void CreatureFloat(short itemNumber);
 void CreatureJoint(ItemInfo* item, short joint, short required);

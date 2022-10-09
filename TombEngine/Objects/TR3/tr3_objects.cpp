@@ -7,7 +7,7 @@
 #include "Specific/level.h"
 #include "Specific/setup.h"
 
-// Entities
+// Creatures
 #include "Objects/TR3/Entity/tr3_civvy.h" // OK
 #include "Objects/TR3/Entity/tr3_cobra.h" // OK
 #include "Objects/TR3/Entity/tr3_fish_emitter.h" // OK
@@ -35,7 +35,7 @@
 #include "Objects/TR3/Vehicles/upv.h"
 #include "Objects/TR3/Vehicles/rubber_boat.h"
 
-using namespace TEN::Entities::TR3;
+using namespace TEN::Entities::Creatures::TR3;
 
 static void StartEntity(ObjectInfo* obj)
 {
@@ -56,9 +56,9 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveFlags = true;
 		obj->saveHitpoints = true;
 		obj->savePosition = true;
-		obj->zoneType = ZTA_Basic;
-		obj->SetBoneRotation(6, ROT_Y|ROT_X);
-		obj->SetBoneRotation(13, ROT_Y);
+		g_Level.Bones[obj->boneIndex + 6 * 4] |= ROT_Y;
+		g_Level.Bones[obj->boneIndex + 6 * 4] |= ROT_X;
+		g_Level.Bones[obj->boneIndex + 13 * 4] |= ROT_Y;
 	}
 
 	obj = &Objects[ID_TIGER];
@@ -76,8 +76,7 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveHitpoints = true;
 		obj->saveAnim = true;
 		obj->saveFlags = true;
-		obj->zoneType = ZTA_Basic;
-		obj->SetBoneRotation(21, ROT_Y);
+		g_Level.Bones[obj->boneIndex + 21 * 4] |= ROT_Y;
 	}
 
 	obj = &Objects[ID_COBRA];
@@ -96,9 +95,9 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveHitpoints = true;
 		obj->saveAnim = true;
 		obj->saveFlags = true;
-		obj->zoneType = ZTA_Basic;
-		obj->SetBoneRotation(0, ROT_Y);
-		obj->SetBoneRotation(6, ROT_Y);
+
+		g_Level.Bones[obj->boneIndex + 0 * 4] |= ROT_Y;
+		g_Level.Bones[obj->boneIndex + 6 * 4] |= ROT_Y;
 	}
 
 	obj = &Objects[ID_RAPTOR];
@@ -116,11 +115,11 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveHitpoints = true;
 		obj->saveAnim = true;
 		obj->saveFlags = true;
-		obj->zoneType = ZTA_Basic;
-		obj->SetBoneRotation(20, ROT_Y);
-		obj->SetBoneRotation(21, ROT_Y);
-		obj->SetBoneRotation(23, ROT_Y);
-		obj->SetBoneRotation(25, ROT_Y);
+
+		g_Level.Bones[obj->boneIndex + 20 * 4] |= ROT_Y;
+		g_Level.Bones[obj->boneIndex + 21 * 4] |= ROT_Y;
+		g_Level.Bones[obj->boneIndex + 23 * 4] |= ROT_Y;
+		g_Level.Bones[obj->boneIndex + 25 * 4] |= ROT_Y;
 	}
 
 	obj = &Objects[ID_TRIBESMAN_WITH_AX];
@@ -138,9 +137,9 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveAnim = true;
 		obj->saveFlags = true;
 		obj->pivotLength = 0;
-		obj->zoneType = ZTA_Basic;
-		obj->SetBoneRotation(6, ROT_Y);
-		obj->SetBoneRotation(13, ROT_Y);
+
+		g_Level.Bones[obj->boneIndex + 13 * 4] |= ROT_Y;
+		g_Level.Bones[obj->boneIndex + 6 * 4] |= ROT_Y;
 	}
 
 	obj = &Objects[ID_TRIBESMAN_WITH_DARTS];
@@ -158,9 +157,9 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveAnim = true;
 		obj->saveFlags = true;
 		obj->pivotLength = 0;
-		obj->zoneType = ZTA_Basic;
-		obj->SetBoneRotation(6, ROT_Y);
-		obj->SetBoneRotation(13, ROT_Y);
+
+		g_Level.Bones[obj->boneIndex + 13 * 4] |= ROT_Y;
+		g_Level.Bones[obj->boneIndex + 6 * 4] |= ROT_Y;
 	}
 
 	obj = &Objects[ID_TYRANNOSAUR];
@@ -178,9 +177,9 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveHitpoints = true;
 		obj->saveAnim = true;
 		obj->saveFlags = true;
-		obj->zoneType = ZTA_Basic;
-		obj->SetBoneRotation(10, ROT_Y);
-		obj->SetBoneRotation(11, ROT_Y);
+
+		g_Level.Bones[obj->boneIndex + 10 * 4] |= ROT_Y;
+		g_Level.Bones[obj->boneIndex + 11 * 4] |= ROT_Y;
 	}
 
 	obj = &Objects[ID_SCUBA_DIVER];
@@ -199,9 +198,10 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveAnim = true;
 		obj->saveFlags = true;
 		obj->pivotLength = 50;
-		obj->zoneType = ZTA_Croc;
-		obj->SetBoneRotation(10, ROT_Y);
-		obj->SetBoneRotation(14, ROT_Z);
+		obj->ZoneType = ZoneType::Water;
+
+		g_Level.Bones[obj->boneIndex + 10 * 4] |= ROT_Y;
+		g_Level.Bones[obj->boneIndex + 14 * 4] |= ROT_Z;
 	}
 
 	obj = &Objects[ID_SCUBA_HARPOON];
@@ -227,9 +227,10 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveAnim = true;
 		obj->saveFlags = true;
 		obj->pivotLength = 0;
-		obj->zoneType = ZTA_Basic;
-		obj->SetBoneRotation(0, ROT_X | ROT_Y);
-		obj->SetBoneRotation(7, ROT_Y);
+
+		g_Level.Bones[obj->boneIndex + 0 * 4] |= ROT_Y;
+		g_Level.Bones[obj->boneIndex + 0 * 4] |= ROT_X;
+		g_Level.Bones[obj->boneIndex + 7 * 4] |= ROT_Y;
 	}
 
 	obj = &Objects[ID_MONKEY];
@@ -248,9 +249,10 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveAnim = true;
 		obj->saveFlags = true;
 		obj->pivotLength = 0;
-		obj->zoneType = ZTA_Human;
-		obj->SetBoneRotation(0, ROT_X | ROT_Y);
-		obj->SetBoneRotation(7, ROT_Y);
+
+		g_Level.Bones[obj->boneIndex + 0 * 4] |= ROT_Y;
+		g_Level.Bones[obj->boneIndex + 0 * 4] |= ROT_X;
+		g_Level.Bones[obj->boneIndex + 7 * 4] |= ROT_Y;
 	}
 
 	obj = &Objects[ID_MP_WITH_GUN];
@@ -269,9 +271,10 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveFlags = true;
 		obj->pivotLength = 0;
 		obj->biteOffset = 0;
-		obj->zoneType = ZTA_Basic;
-		obj->SetBoneRotation(6, ROT_X | ROT_Y);
-		obj->SetBoneRotation(13, ROT_Y);
+
+		g_Level.Bones[obj->boneIndex + 6 * 4] |= ROT_Y;
+		g_Level.Bones[obj->boneIndex + 6 * 4] |= ROT_X;
+		g_Level.Bones[obj->boneIndex + 13 * 4] |= ROT_Y;
 	}
 
 	obj = &Objects[ID_MP_WITH_STICK];
@@ -290,9 +293,11 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveAnim = true;
 		obj->saveFlags = true;
 		obj->pivotLength = 0;
-		obj->zoneType = ZTA_Human;
-		obj->SetBoneRotation(6, ROT_X | ROT_Y);
-		obj->SetBoneRotation(13, ROT_Y);
+		obj->ZoneType = ZoneType::HumanClassic;
+
+		g_Level.Bones[obj->boneIndex + 6 * 4] |= ROT_Y;
+		g_Level.Bones[obj->boneIndex + 6 * 4] |= ROT_X;
+		g_Level.Bones[obj->boneIndex + 13 * 4] |= ROT_Y;
 	}
 
 	obj = &Objects[ID_SHIVA];
@@ -312,9 +317,8 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveFlags = true;
 		obj->saveHitpoints = true;
 		obj->savePosition = true;
-		obj->zoneType = ZTA_Basic;
-		obj->SetBoneRotation(6, ROT_X | ROT_Y);
-		obj->SetBoneRotation(25, ROT_X | ROT_Y);
+		g_Level.Bones[obj->boneIndex + 6 * 4] |= (ROT_X | ROT_Y);
+		g_Level.Bones[obj->boneIndex + 25 * 4] |= (ROT_X | ROT_Y);
 	}
 
 	obj = &Objects[ID_SOPHIA_LEE_BOSS];
@@ -334,9 +338,9 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveFlags = true;
 		obj->savePosition = true;
 		obj->saveHitpoints = true;
-		obj->zoneType = ZTA_SophiaLee;
-		obj->SetBoneRotation(6, ROT_X | ROT_Y);
-		obj->SetBoneRotation(13, ROT_Y);
+		g_Level.Bones[obj->boneIndex + 6 * 4] |= ROT_Y;
+		g_Level.Bones[obj->boneIndex + 6 * 4] |= ROT_X;
+		g_Level.Bones[obj->boneIndex + 13 * 4] |= ROT_Y;
 	}
 
 	obj = &Objects[ID_CIVVIE];
@@ -355,9 +359,9 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveAnim = true;
 		obj->saveFlags = true;
 		obj->pivotLength = 0;
-		obj->zoneType = ZTA_Human;
-		obj->SetBoneRotation(6, ROT_X | ROT_Y);
-		obj->SetBoneRotation(13, ROT_Y);
+		g_Level.Bones[obj->boneIndex + 6 * 4] |= ROT_Y;
+		g_Level.Bones[obj->boneIndex + 6 * 4] |= ROT_X;
+		g_Level.Bones[obj->boneIndex + 13 * 4] |= ROT_Y;
 	}
 }
 

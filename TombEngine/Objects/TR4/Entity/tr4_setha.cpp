@@ -11,8 +11,11 @@
 #include "Game/misc.h"
 #include "Game/people.h"
 #include "Specific/level.h"
+#include "Specific/prng.h"
 #include "Specific/setup.h"
 #include "Specific/trmath.h"
+
+using namespace TEN::Math::Random;
 
 namespace TEN::Entities::TR4
 {
@@ -26,11 +29,7 @@ namespace TEN::Entities::TR4
 		auto* item = &g_Level.Items[itemNumber];
 
 		ClearItem(itemNumber);
-
-		item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + 4;
-		item->Animation.FrameNumber = g_Level.Anims[item->Animation.AnimNumber].frameBase;
-		item->Animation.ActiveState = 12;
-		item->Animation.TargetState = 12;
+		SetAnimation(item, 4);
 	}
 
 	void SethaControl(short itemNumber)
@@ -96,7 +95,7 @@ namespace TEN::Entities::TR4
 			{
 			case 1:
 				creature->LOT.IsJumping = false;
-				creature->Flags = NULL;
+				creature->Flags = 0;
 
 				if (item->Animation.RequiredState)
 				{
@@ -111,8 +110,7 @@ namespace TEN::Entities::TR4
 				else if (LaraItem->Pose.Position.y >= (item->Pose.Position.y - SECTOR(1)))
 				{
 					if (AI.distance < pow(SECTOR(2.5f), 2) &&
-						AI.ahead &&
-						GetRandomControl() & 1 &&
+						AI.ahead && TestProbability(0.5f) &&
 						Targetable(item, &AI))
 					{
 						item->Animation.TargetState = 11;
@@ -123,7 +121,7 @@ namespace TEN::Entities::TR4
 						ceiling < (item->Pose.Position.y - SECTOR(1.75f)) &&
 						height4 != NO_HEIGHT &&
 						height4 > (item->Pose.Position.y - SECTOR(1)) &&
-						GetRandomControl() & 1)
+						TestProbability(0.5f))
 					{
 						item->Pose.Position.y -= SECTOR(1.5f);
 						if (Targetable(item, &AI))
@@ -193,8 +191,7 @@ namespace TEN::Entities::TR4
 
 				if (AI.bite &&
 					AI.distance < pow(SECTOR(4), 2) ||
-					canJump ||
-					creature->ReachedGoal)
+					canJump || creature->ReachedGoal)
 				{
 					item->Animation.TargetState = 1;
 				}
@@ -208,8 +205,7 @@ namespace TEN::Entities::TR4
 
 				if (AI.bite &&
 					AI.distance < pow(SECTOR(4), 2) ||
-					canJump ||
-					creature->ReachedGoal)
+					canJump || creature->ReachedGoal)
 				{
 					item->Animation.TargetState = 1;
 				}
@@ -263,7 +259,7 @@ namespace TEN::Entities::TR4
 				if (item->Animation.AnimNumber == Objects[item->Animation.AnimNumber].animIndex + 17 &&
 					item->Animation.FrameNumber == g_Level.Anims[item->Animation.AnimNumber].frameEnd)
 				{
-					if (GetRandomControl() & 1)
+					if (TestProbability(0.5f))
 						item->Animation.RequiredState = 10;
 				}
 
@@ -481,7 +477,7 @@ namespace TEN::Entities::TR4
 			spark->flags = SP_NODEATTACH | SP_EXPDEF | SP_ITEM | SP_ROTATE | SP_SCALE | SP_DEF;
 			spark->rotAng = GetRandomControl() & 0xFFF;
 
-			if (GetRandomControl() & 1)
+			if (TestProbability(0.5f))
 				spark->rotAdd = -32 - (GetRandomControl() & 0x1F);
 			else
 				spark->rotAdd = (GetRandomControl() & 0x1F) + 32;
@@ -524,10 +520,10 @@ namespace TEN::Entities::TR4
 
 		item->ItemFlags[0]++;
 
-		auto pos1 = Vector3Int(SethaAttack1.x, SethaAttack1.y, SethaAttack1.z);
+		auto pos1 = Vector3Int(SethaAttack1.Position);
 		GetJointAbsPosition(item, &pos1, SethaAttack1.meshNum);
 
-		auto pos2 = Vector3Int(SethaAttack2.x, SethaAttack2.y, SethaAttack2.z);
+		auto pos2 = Vector3Int(SethaAttack2.Position);
 		GetJointAbsPosition(item, &pos2, SethaAttack2.meshNum);
 
 		int size;
@@ -584,7 +580,8 @@ namespace TEN::Entities::TR4
 
 			if (item->ItemFlags[0] >= 96 && item->ItemFlags[0] <= 99)
 			{
-				auto pos = Vector3Int(SethaAttack1.x, SethaAttack1.y * 2, SethaAttack1.z);
+				auto pos = Vector3Int(SethaAttack1.Position);
+				pos.y *= 2;
 				GetJointAbsPosition(item, &pos, SethaAttack1.meshNum);
 
 				auto angles = GetVectorAngles(pos.x - pos1.x, pos.y - pos1.y, pos.z - pos1.z);
@@ -593,7 +590,8 @@ namespace TEN::Entities::TR4
 			}
 			else if (item->ItemFlags[0] >= 122 && item->ItemFlags[0] <= 125)
 			{
-				auto pos = Vector3Int(SethaAttack2.x, SethaAttack2.y * 2, SethaAttack2.z);
+				auto pos = Vector3Int(SethaAttack2.Position);
+				pos.y *= 2;
 				GetJointAbsPosition(item, &pos, SethaAttack2.meshNum);
 
 				auto angles = GetVectorAngles(pos.x - pos2.x, pos.y - pos2.y, pos.z - pos2.z);
@@ -621,14 +619,16 @@ namespace TEN::Entities::TR4
 			{
 				if (Wibble & 4)
 				{
-					auto pos = Vector3Int(SethaAttack1.x, SethaAttack1.y * 2, SethaAttack1.z);
+					auto pos = Vector3Int(SethaAttack1.Position);
+					pos.y *= 2;
 					GetJointAbsPosition(item, &pos, SethaAttack1.meshNum);
 
 					auto angles = GetVectorAngles(pos.x - pos1.x, pos.y - pos1.y, pos.z - pos1.z);
 					auto attackPose = PHD_3DPOS(pos1, angles);
 					SethaThrowAttack(&attackPose, item->RoomNumber, 0);
 
-					pos = Vector3Int(SethaAttack2.x, SethaAttack2.y * 2, SethaAttack2.z);
+					pos = Vector3Int(SethaAttack2.Position);
+					pos.y *= 2;
 					GetJointAbsPosition(item, &pos, SethaAttack2.meshNum);
 
 					angles = GetVectorAngles(pos.x - pos2.x, pos.y - pos2.y, pos.z - pos2.z);
@@ -653,9 +653,7 @@ namespace TEN::Entities::TR4
 					);
 
 					TriggerSethaSparks1(
-						pos.x,
-						pos.y,
-						pos.z,
+						pos.x, pos.y, pos.z,
 						(pos1.x - pos.x),
 						(pos1.y - pos.y),
 						(SECTOR(1) - (GetRandomControl() & 0x7FF)));
@@ -667,9 +665,7 @@ namespace TEN::Entities::TR4
 					);
 
 					TriggerSethaSparks1(
-						pos.x,
-						pos.y,
-						pos.z,
+						pos.x, pos.y, pos.z,
 						(pos2.x - pos.x),
 						(pos2.y - pos.y),
 						(SECTOR(1) - (GetRandomControl() & 0x7FF)));
@@ -690,7 +686,8 @@ namespace TEN::Entities::TR4
 
 			if (item->ItemFlags[0] == 102)
 			{
-				auto pos = Vector3Int(SethaAttack1.x, SethaAttack1.y * 2, SethaAttack1.z);
+				auto pos = Vector3Int(SethaAttack1.Position);
+				pos.y *= 2;
 				GetJointAbsPosition(item, &pos, SethaAttack1.meshNum);
 
 				auto angles = GetVectorAngles(pos.x - pos1.x, pos.y - pos1.y, pos.z - pos1.z);

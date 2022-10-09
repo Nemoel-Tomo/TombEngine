@@ -9,12 +9,15 @@
 #include "Game/control/lot.h"
 #include "Game/itemdata/creature_info.h"
 #include "Game/items.h"
+#include "Specific/prng.h"
 #include "Specific/setup.h"
 #include "Specific/trmath.h"
 
+using namespace TEN::Math::Random;
+
 namespace TEN::Entities::TR4
 {
-	constexpr auto BAT_DAMAGE = 50;
+	constexpr auto BAT_ATTACK_DAMAGE = 50;
 
 	constexpr auto BAT_UNFURL_HEIGHT_RANGE = SECTOR(0.87f);
 	constexpr auto BAT_ATTACK_RANGE		   = SQUARE(CLICK(1));
@@ -26,7 +29,7 @@ namespace TEN::Entities::TR4
 
 	enum BatState
 	{
-		BAT_STATE_NONE = 0,
+		// No state 0.
 		BAT_STATE_DROP_FROM_CEILING = 1,
 		BAT_STATE_FLY = 2,
 		BAT_STATE_ATTACK = 3,
@@ -45,9 +48,9 @@ namespace TEN::Entities::TR4
 		BAT_ANIM_IDLE = 5,
 	};
 
-	static bool isBatCollideTarget(ItemInfo* item)
+	bool IsBatCollideTarget(ItemInfo* item)
 	{
-		return item->TouchBits >= 0;
+		return (item->TouchBits >= 0);
 	}
 
 	void InitialiseBat(short itemNumber)
@@ -99,7 +102,7 @@ namespace TEN::Entities::TR4
 				break;
 
 			case BAT_STATE_FLY:
-				if (AI.distance < BAT_ATTACK_RANGE || !(GetRandomControl() & 0x3F))
+				if (AI.distance < BAT_ATTACK_RANGE || TestProbability(1.0f / 64))
 					creature->Flags = 0;
 
 				if (!creature->Flags)
@@ -121,7 +124,7 @@ namespace TEN::Entities::TR4
 					AI.distance < BAT_ATTACK_RANGE && AI.ahead &&
 					abs(item->Pose.Position.y - creature->Enemy->Pose.Position.y) < BAT_UNFURL_HEIGHT_RANGE)
 				{
-					DoDamage(creature->Enemy, BAT_DAMAGE);
+					DoDamage(creature->Enemy, BAT_ATTACK_DAMAGE);
 					CreatureEffect(item, BatBite, DoBloodSplat);
 					creature->Flags = 1;
 				}
@@ -147,7 +150,7 @@ namespace TEN::Entities::TR4
 			else
 				SetAnimation(item, BAT_ANIM_DEATH_FALL);
 				item->Animation.IsAirborne = true;
-				item->Animation.Velocity = 0;
+				item->Animation.Velocity.z = 0;
 		}
 
 		CreatureAnimation(itemNumber, angle, 0);

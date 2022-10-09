@@ -22,6 +22,7 @@
 #include "Objects/TR5/Emitter/tr5_spider_emitter.h"
 #include "Objects/TR5/Emitter/tr5_rats_emitter.h"
 #include "Objects/TR5/Object/tr5_pushableblock.h"
+#include "Objects/Effects/tr4_locusts.h"
 
 using std::function;
 using namespace TEN::Effects::Footprints;
@@ -85,6 +86,7 @@ void ClearSwarmEnemies(ItemInfo* item)
 	ClearSpiders();
 	ClearRats();
 	ClearBeetleSwarm();
+	ClearLocusts();
 }
 
 void FlashOrange(ItemInfo* item) 
@@ -323,8 +325,9 @@ void FloorShake(ItemInfo* item)
 
 void Turn180(ItemInfo* item)
 {
-	item->Pose.Orientation.y -= ANGLE(180.0f);
 	item->Pose.Orientation.x = -item->Pose.Orientation.x;
+	item->Pose.Orientation.y += ANGLE(180.0f);
+	item->Pose.Orientation.z = -item->Pose.Orientation.z;
 }
 
 void FinishLevel(ItemInfo* item)

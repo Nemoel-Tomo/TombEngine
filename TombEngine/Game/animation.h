@@ -1,11 +1,11 @@
 #pragma once
 #include "Specific/phd_global.h"
 
+struct ItemInfo;
 struct PHD_3DPOS;
 struct Vector3Int;
-struct ItemInfo;
 
-struct ANIM_FRAME
+struct AnimFrame
 {
 	BOUNDING_BOX boundingBox;
 	short offsetX;
@@ -14,58 +14,60 @@ struct ANIM_FRAME
 	std::vector<Quaternion> angles;
 };
 
-struct CHANGE_STRUCT
+struct StateDispatchData
 {
-	int TargetState;
-	int numberRanges;
-	int rangeIndex;
+	int TargetState	 = -1;
+	int NumberRanges = 0;
+	int RangeIndex	 = -1;
 };
 
-struct RANGE_STRUCT
+struct StateDispatchRangeData
 {
-	int startFrame;
-	int endFrame;
-	int linkAnimNum;
-	int linkFrameNum;
+	int StartFrame	 = -1;
+	int EndFrame	 = -1;
+	int LinkAnimNum	 = -1;
+	int LinkFrameNum = -1;
 };
 
-struct ANIM_STRUCT
+struct AnimData
 {
-	int framePtr;
-	int interpolation;
+	int FramePtr;
+	int Interpolation;
 	int ActiveState;
-	int velocity;
-	int acceleration;
-	int Xvelocity;
-	int Xacceleration;
+
+	// CONVENTION: +X is right, +Y is down, +Z is forward.
+	Vector3 VelocityStart = Vector3::Zero;
+	Vector3 VelocityEnd	  = Vector3::Zero;
+
 	int frameBase;
 	int frameEnd;
-	int jumpAnimNum;
-	int jumpFrameNum;
-	int numberChanges;
-	int changeIndex;
-	int numberCommands;
-	int commandIndex;
+
+	int JumpAnimNum;
+	int JumpFrameNum;
+	int NumStateDispatches;
+	int StateDispatchIndex;
+	int NumCommands;
+	int CommandIndex;
 };
 
-enum ANIMCOMMAND_TYPES
+enum class AnimCommandType
 {
-	COMMAND_NULL = 0,
-	COMMAND_MOVE_ORIGIN,
-	COMMAND_JUMP_VELOCITY,
-	COMMAND_ATTACK_READY,
-	COMMAND_DEACTIVATE,
-	COMMAND_SOUND_FX,
-	COMMAND_EFFECT
+	None = 0,
+	MoveOrigin,
+	JumpVelocity,
+	AttackReady,
+	Deactivate,
+	SoundEffect,
+	Flipeffect
 };
 
-struct BONE_MUTATOR
+struct BoneMutator
 {
-	Vector3 Scale    = Vector3::One;
 	Vector3 Offset   = Vector3::Zero;
 	Vector3 Rotation = Vector3::Zero;
+	Vector3 Scale    = Vector3::One;
 
-	bool IsEmpty() { return (Scale == Vector3::One) && (Offset == Vector3::Zero) && (Rotation == Vector3::Zero); };
+	bool IsEmpty() { return  (Offset == Vector3::Zero) && (Rotation == Vector3::Zero) && (Scale == Vector3::One); };
 };
 
 void AnimateLara(ItemInfo* item);
@@ -74,8 +76,9 @@ void AnimateItem(ItemInfo* item);
 bool HasStateDispatch(ItemInfo* item, int targetState = -1);
 bool TestLastFrame(ItemInfo* item, int animNumber = -1);
 
-void TranslateItem(ItemInfo* item, short angle, float forward, float vertical = 0.0f, float lateral = 0.0f);
+void TranslateItem(ItemInfo* item, short angle, float forward, float down = 0.0f, float right = 0.0f);
 void TranslateItem(ItemInfo* item, Vector3Shrt orient, float distance);
+void TranslateItem(ItemInfo* item, Vector3 direction, float distance);
 void SetAnimation(ItemInfo* item, int animIndex, int frameToStart = 0);
 
 int GetCurrentRelativeFrameNumber(ItemInfo* item);
@@ -84,9 +87,9 @@ int GetFrameNumber(int objectID, int animNumber, int frameToStart);
 int GetFrameCount(int animNumber);
 int GetNextAnimState(ItemInfo* item);
 int GetNextAnimState(int objectID, int animNumber);
-bool GetChange(ItemInfo* item, ANIM_STRUCT* anim);
-int GetFrame(ItemInfo* item, ANIM_FRAME* framePtr[], int* rate);
-ANIM_FRAME* GetBestFrame(ItemInfo* item);
+bool GetStateDispatch(ItemInfo* item, const AnimData& anim);
+int GetFrame(ItemInfo* item, AnimFrame* framePtr[], int* rate);
+AnimFrame* GetBestFrame(ItemInfo* item);
 
 BOUNDING_BOX* GetBoundsAccurate(ItemInfo* item);
 void GetLaraJointPosition(Vector3Int* pos, int laraMeshIndex);

@@ -366,33 +366,25 @@ GameStatus ControlPhase(int numFrames, int demoMode)
 
 unsigned CALLBACK GameMain(void *)
 {
-	try 
-	{
-		TENLog("Starting GameMain...", LogLevel::Info);
+	TENLog("Starting GameMain...", LogLevel::Info);
 
-		TimeInit();
+	TimeInit();
 
-		if (g_GameFlow->IntroImagePath.empty())
-			throw TENScriptException("Intro image path is not set.");
-
-		// Do a fixed time title image
+	// Do a fixed time title image
+	if (g_GameFlow->IntroImagePath.empty())
+		TENLog("Intro image path is not set.", LogLevel::Warning);
+	else
 		g_Renderer.RenderTitleImage();
 
-		// Execute the LUA gameflow and play the game
-		g_GameFlow->DoFlow();
 
-		DoTheGame = false;
+	// Execute the LUA gameflow and play the game
+	g_GameFlow->DoFlow();
 
-		// Finish the thread
-		PostMessage(WindowsHandle, WM_CLOSE, NULL, NULL);
-		EndThread();
-	}
-	catch (TENScriptException const& e) 
-	{
-		std::string msg = std::string{ "An unrecoverable error occurred in " } + __func__ + ": " + e.what();
-		TENLog(msg, LogLevel::Error, LogConfig::All);
-		throw;
-	}
+	DoTheGame = false;
+
+	// Finish the thread
+	PostMessage(WindowsHandle, WM_CLOSE, NULL, NULL);
+	EndThread();
 
 	return true;
 }
@@ -407,14 +399,15 @@ GameStatus DoTitle(int index, std::string const& ambient)
 
 	InventoryResult inventoryResult;
 
+	g_GameStringsHandler->ClearDisplayStrings();
+	g_GameScript->ResetScripts(true);
+
 	if (g_GameFlow->TitleType == TITLE_TYPE::FLYBY)
 	{
 		// Initialise items, effects, lots, camera
 		InitialiseFXArray(true);
 		InitialisePickupDisplay();
 		InitialiseCamera();
-
-		g_GameScript->ResetScripts(true);
 
 		// Run the level script
 		ScriptInterfaceLevel* level = g_GameFlow->GetLevel(index);
@@ -451,9 +444,8 @@ GameStatus DoTitle(int index, std::string const& ambient)
 		g_Gui.SetMenuToDisplay(Menu::Title);
 		g_Gui.SetSelectedOption(0);
 
-		// Initialise ponytails
 		InitialiseHair();
-
+		InitialiseNodeScripts();
 		InitialiseItemBoxData();
 
 		g_GameScript->OnStart();
@@ -518,6 +510,7 @@ GameStatus DoLevel(int index, std::string const& ambient, bool loadFromSavegame)
 	InitialisePickupDisplay();
 	InitialiseCamera();
 
+	g_GameStringsHandler->ClearDisplayStrings();
 	g_GameScript->ResetScripts(loadFromSavegame);
 
 	// Run the level script
@@ -576,9 +569,8 @@ GameStatus DoLevel(int index, std::string const& ambient, bool loadFromSavegame)
 	// Initialise flyby cameras
 	InitSpotCamSequences();
 
-	// Initialise ponytails
 	InitialiseHair();
-
+	InitialiseNodeScripts();
 	InitialiseItemBoxData();
 
 	if (loadFromSavegame)
@@ -723,6 +715,9 @@ void CleanUp()
 	DisableDripParticles();
 	DisableBubbles();
 	DisableDebris();
+
+	// Clear swarm enemies
+	ClearSwarmEnemies(nullptr);
 
 	// Clear soundtrack masks
 	ClearSoundTrackMasks();

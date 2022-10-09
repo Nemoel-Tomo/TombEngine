@@ -9,7 +9,7 @@
 #include "Game/itemdata/creature_info.h"
 #include "Game/control/control.h"
 
-namespace TEN::Entities::TR5
+namespace TEN::Entities::Creatures::TR5
 {
 	void InitialiseReaper(short itemNumber)
 	{
@@ -57,7 +57,7 @@ namespace TEN::Entities::TR5
 					item->ItemFlags[3]++;
 
 					creature->ReachedGoal = false;
-					creature->Enemy = NULL;
+					creature->Enemy = nullptr;
 				}
 			}
 

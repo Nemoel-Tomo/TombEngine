@@ -1,25 +1,29 @@
 #include "framework.h"
-#include "tr5_guard.h"
-#include "Game/items.h"
+#include "Objects/TR5/Entity/tr5_guard.h"
+
+#include "Game/animation.h"
 #include "Game/collision/collide_room.h"
 #include "Game/control/box.h"
-#include "Game/people.h"
+#include "Game/control/los.h"
 #include "Game/effects/effects.h"
 #include "Game/effects/tomb4fx.h"
-#include "Game/control/los.h"
-#include "Specific/setup.h"
-#include "Game/animation.h"
-#include "Specific/level.h"
+#include "Game/itemdata/creature_info.h"
+#include "Game/items.h"
 #include "Game/Lara/lara.h"
 #include "Game/misc.h"
+#include "Game/people.h"
 #include "Sound/sound.h"
-#include "Game/itemdata/creature_info.h"
+#include "Specific/level.h"
+#include "Specific/prng.h"
+#include "Specific/setup.h"
 
-namespace TEN::Entities::TR5
+using namespace TEN::Math::Random;
+
+namespace TEN::Entities::Creatures::TR5
 {
-	BiteInfo SwatGunBite = { 80, 200, 13, 0 };
-	BiteInfo SniperGunBite = { 0, 480, 110, 13 };
-	BiteInfo ArmedMafia2GunBite = { -50, 220, 60, 13 };
+	const auto SwatGunBite		  = BiteInfo(Vector3(80.0f, 200.0f, 13.0f), 0);
+	const auto SniperGunBite	  = BiteInfo(Vector3(0.0f, 480.0f, 110.0f), 13);
+	const auto ArmedMafia2GunBite = BiteInfo(Vector3(-50.0f, 220.0f, 60.0f), 13);
 
 	enum GuardState
 	{
@@ -287,7 +291,7 @@ namespace TEN::Entities::TR5
 		{
 			creature->FiredWeapon--;
 
-			auto pos = Vector3Int(SwatGunBite.x, SwatGunBite.y, SwatGunBite.z);
+			auto pos = Vector3Int(SwatGunBite.Position);
 			GetJointAbsPosition(item, &pos, SwatGunBite.meshNum);
 
 			TriggerDynamicLight(pos.x, pos.y, pos.z, 2 * creature->FiredWeapon + 10, 192, 128, 32);
@@ -354,7 +358,7 @@ namespace TEN::Entities::TR5
 				if (item->ObjectNumber == ID_SWAT_PLUS)
 				{
 					item->ItemFlags[0]++;
-					if (item->ItemFlags[0] > 60 && !(GetRandomControl() & 0xF))
+					if (item->ItemFlags[0] > 60 && TestProbability(0.06f))
 					{
 						SoundEffect(SFX_TR5_BIO_BREATHE_OUT, &item->Pose);
 						item->ItemFlags[0] = 0;
@@ -382,7 +386,7 @@ namespace TEN::Entities::TR5
 			angle = CreatureTurn(item, creature->MaxTurn);
 			creature->Enemy = LaraItem;
 
-			if ((laraAI.distance < pow(SECTOR(2), 2) && LaraItem->Animation.Velocity > 20) ||
+			if ((laraAI.distance < pow(SECTOR(2), 2) && LaraItem->Animation.Velocity.z > 20) ||
 				item->HitStatus ||
 				TargetVisible(item, &laraAI))
 			{
@@ -550,9 +554,9 @@ namespace TEN::Entities::TR5
 					creature->Flags = 1;
 
 					if (item->Animation.ActiveState == GUARD_STATE_FIRE_SINGLE)
-						ShotLara(item, &AI, &SwatGunBite, joint0, 30);
+						ShotLara(item, &AI, SwatGunBite, joint0, 30);
 					else
-						ShotLara(item, &AI, &SwatGunBite, joint0, 10);
+						ShotLara(item, &AI, SwatGunBite, joint0, 10);
 				
 					// TODO: just for testing energy arcs
 					/*pos1.x = SwatGunBite.x;
@@ -754,7 +758,7 @@ namespace TEN::Entities::TR5
 				joint2 = 0;
 
 				if (!item->HitStatus &&
-					LaraItem->Animation.Velocity < 40 &&
+					LaraItem->Animation.Velocity.z < 40 &&
 					!Lara.Control.Weapon.HasFired)
 				{
 					creature->Alerted = false;
@@ -839,7 +843,7 @@ namespace TEN::Entities::TR5
 
 			case GUARD_STATE_USE_COMPUTER:
 				if ((item->ObjectNumber != ID_SCIENTIST || item != Lara.TargetEntity) &&
-					(GetRandomControl() & 0x7F || item->TriggerFlags >= 10 || item->TriggerFlags == 9))
+					(TestProbability(0.992f) || item->TriggerFlags >= 10 || item->TriggerFlags == 9))
 				{
 					if (item->AIBits & GUARD)
 					{
@@ -859,7 +863,7 @@ namespace TEN::Entities::TR5
 				break;
 
 			case GUARD_STATE_SURRENDER:
-				if (item != Lara.TargetEntity && !(GetRandomControl() & 0x3F))
+				if (item != Lara.TargetEntity && TestProbability(1.0f / 64))
 				{
 					if (item->TriggerFlags == 7 || item->TriggerFlags == 9)
 						item->Animation.RequiredState = GUARD_STATE_USE_COMPUTER;
@@ -996,7 +1000,7 @@ namespace TEN::Entities::TR5
 
 		if (creature->FiredWeapon)
 		{
-			auto pos = Vector3Int(SniperGunBite.x, SniperGunBite.y, SniperGunBite.z);
+			auto pos = Vector3Int(SniperGunBite.Position);
 			GetJointAbsPosition(item, &pos, SniperGunBite.meshNum);
 
 			TriggerDynamicLight(pos.x, pos.y, pos.z, 2 * creature->FiredWeapon + 10, 192, 128, 32);
@@ -1044,11 +1048,11 @@ namespace TEN::Entities::TR5
 				creature->Flags = 0;
 				if (!TargetVisible(item, &AI) ||
 					item->HitStatus &&
-					GetRandomControl() & 1)
+					TestProbability(0.5f))
 				{
 					item->Animation.TargetState = SNIPER_STATE_COVER;
 				}
-				else if (!(GetRandomControl() & 0x1F))
+				else if (TestProbability(1.0f / 30))
 					item->Animation.TargetState = SNIPER_STATE_FIRE;
 			
 				break;
@@ -1056,7 +1060,7 @@ namespace TEN::Entities::TR5
 			case SNIPER_STATE_FIRE:
 				if (!creature->Flags)
 				{
-					ShotLara(item, &AI, &SniperGunBite, joint0, 100);
+					ShotLara(item, &AI, SniperGunBite, joint0, 100);
 					creature->FiredWeapon = 2;
 					creature->Flags = 1;
 				}
@@ -1155,7 +1159,7 @@ namespace TEN::Entities::TR5
 
 		if (creature->FiredWeapon)
 		{
-			auto pos = Vector3Int(ArmedMafia2GunBite.x, ArmedMafia2GunBite.y, ArmedMafia2GunBite.z);
+			auto pos = Vector3Int(ArmedMafia2GunBite.Position);
 			GetJointAbsPosition(item, &pos, ArmedMafia2GunBite.meshNum);
 
 			TriggerDynamicLight(pos.x, pos.y, pos.z, 4 * creature->FiredWeapon + 8, 24, 16, 4);
@@ -1193,7 +1197,7 @@ namespace TEN::Entities::TR5
 			creature->Enemy = LaraItem;
 			angle = CreatureTurn(item, creature->MaxTurn);
 
-			if ((laraAI.distance < pow(SECTOR(2), 2) && LaraItem->Animation.Velocity > 20) ||
+			if ((laraAI.distance < pow(SECTOR(2), 2) && LaraItem->Animation.Velocity.z > 20) ||
 				item->HitStatus ||
 				TargetVisible(item, &laraAI))
 			{
@@ -1315,7 +1319,7 @@ namespace TEN::Entities::TR5
 			
 				if (!creature->Flags)
 				{
-					ShotLara(item, &AI, &ArmedMafia2GunBite, laraAI.angle / 2, 35);
+					ShotLara(item, &AI, ArmedMafia2GunBite, laraAI.angle / 2, 35);
 					creature->Flags = 1;
 					creature->FiredWeapon = 2;
 				}

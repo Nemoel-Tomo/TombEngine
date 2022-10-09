@@ -4,6 +4,7 @@
 #include "Game/animation.h"
 #include "Game/control/box.h"
 #include "Game/control/control.h"
+#include "Game/effects/effects.h"
 #include "Game/items.h"
 #include "Game/itemdata/creature_info.h"
 #include "Game/misc.h"
@@ -11,9 +12,11 @@
 #include "Specific/level.h"
 #include "Specific/setup.h"
 
-namespace TEN::Entities::TR2
+namespace TEN::Entities::Creatures::TR2
 {
-	BiteInfo WorkerShotgunBite = { 0, 281, 40, 9 };
+	const auto WorkerShotgunBite = BiteInfo(Vector3(0.0f, 281.0f, 40.0f), 9);
+
+	constexpr auto WORKER_SHOTGUN_NUM_SHOTS = 6;
 
 	// TODO
 	enum ShotgunWorkerState
@@ -27,14 +30,10 @@ namespace TEN::Entities::TR2
 
 	};
 
-	static void ShotLaraWithShotgun(ItemInfo* item, AI_INFO* info, BiteInfo* bite, short angleY, int damage)
+	void ShotLaraWithShotgun(ItemInfo* item, AI_INFO* info, BiteInfo bite, short angleY, int damage)
 	{
-		ShotLara(item, info, bite, angleY, damage);
-		ShotLara(item, info, bite, angleY, damage);
-		ShotLara(item, info, bite, angleY, damage);
-		ShotLara(item, info, bite, angleY, damage);
-		ShotLara(item, info, bite, angleY, damage);
-		ShotLara(item, info, bite, angleY, damage);
+		for (int i = 0; i < WORKER_SHOTGUN_NUM_SHOTS; i++)
+			ShotLara(item, info, bite, angleY, damage);
 	}
 
 	void InitialiseWorkerShotgun(short itemNum)
@@ -57,12 +56,20 @@ namespace TEN::Entities::TR2
 		auto* item = &g_Level.Items[itemNumber];
 		auto* creature = GetCreatureInfo(item);
 
+		short tilt = 0;
 		short angle = 0;
 		short headX = 0;
 		short headY = 0;
 		short torsoX = 0;
 		short torsoY = 0;
-		short tilt = 0;
+
+		if (creature->FiredWeapon)
+		{
+			auto pos = Vector3Int(WorkerShotgunBite.Position);
+			GetJointAbsPosition(item, &pos, WorkerShotgunBite.meshNum);
+			TriggerDynamicLight(pos.x, pos.y, pos.z, (creature->FiredWeapon * 2) + 4, 24, 16, 4);
+			creature->FiredWeapon--;
+		}
 
 		if (item->HitPoints <= 0)
 		{
@@ -96,18 +103,21 @@ namespace TEN::Entities::TR2
 				}
 
 				if (creature->Mood == MoodType::Escape)
-				{
 					item->Animation.TargetState = 5;
-				}
 				else if (Targetable(item, &AI))
 				{
-					if (AI.distance <= pow(SECTOR(3), 2) || AI.zoneNumber != AI.enemyZone)
+					if (AI.distance < pow(SECTOR(3), 2) || AI.zoneNumber != AI.enemyZone)
 						item->Animation.TargetState = (GetRandomControl() >= 0x4000) ? 9 : 8;
 					else
 						item->Animation.TargetState = 1;
 				}
 				else if (creature->Mood == MoodType::Attack || !AI.ahead)
-					item->Animation.TargetState = (AI.distance <= pow(SECTOR(2), 2)) ? 1 : 5;
+				{
+					if (AI.distance <= pow(SECTOR(2), 2))
+						item->Animation.TargetState = 1;
+					else
+						item->Animation.TargetState = 5;
+				}
 				else
 					item->Animation.TargetState = 3;
 
@@ -156,8 +166,8 @@ namespace TEN::Entities::TR2
 				break;
 
 			case 5:
-				creature->MaxTurn = 910;
 				tilt = angle / 2;
+				creature->MaxTurn = 910;
 
 				if (AI.ahead)
 				{
@@ -186,7 +196,12 @@ namespace TEN::Entities::TR2
 				}
 
 				if (Targetable(item, &AI))
-					item->Animation.TargetState = (item->Animation.ActiveState == 8) ? 4 : 10;
+				{
+					if (item->Animation.ActiveState == 8)
+						item->Animation.TargetState = 4;
+					else
+						item->Animation.TargetState = 10;
+				}
 
 				break;
 
@@ -200,7 +215,7 @@ namespace TEN::Entities::TR2
 
 				if (!creature->Flags)
 				{
-					ShotLaraWithShotgun(item, &AI, &WorkerShotgunBite, torsoY, 25);
+					ShotLaraWithShotgun(item, &AI, WorkerShotgunBite, torsoY, 25);
 					creature->FiredWeapon = 2;
 					creature->Flags = 1;
 				}
@@ -222,7 +237,7 @@ namespace TEN::Entities::TR2
 
 				if (!creature->Flags)
 				{
-					ShotLaraWithShotgun(item, &AI, &WorkerShotgunBite, torsoY, 25);
+					ShotLaraWithShotgun(item, &AI, WorkerShotgunBite, torsoY, 25);
 					creature->FiredWeapon = 2;
 					creature->Flags = 1;
 				}

@@ -1,6 +1,7 @@
 #pragma once
-#include <vector>
 #include "Specific/phd_global.h"
+
+using std::vector;
 
 struct ItemInfo;
 
@@ -12,46 +13,37 @@ struct BOX_NODE
 	int boxNumber;
 };
 
-enum ZoneType
+enum class ZoneType
 {
-	ZT_Skeleton,
-	ZT_Basic,
-	ZT_Croc, // water zone (also include ground ?)
-	ZT_Human,
-	ZT_VonCroy,
-	ZT_Fly
-};
+	None = -1,
+	Skeleton,
+	Basic,
+	Flyer,
+	HumanClassic,
+	VonCroy,
+	Water,
+	Max,
 
-enum ZoneTypeAttribute
-{
-	ZTA_None = -1, // default zone (which defined
-	ZTA_Skeleton,
-	ZTA_Basic,
-	ZTA_Croc, // water zone (also include ground ?)
-	ZTA_Human, // no jump nor monkey !
-	ZTA_VonCroy, // jump + monkey + longjump
-	ZTA_Fly,
-
-	// these are not real zone, just addons for InitialiseSlot()
-
-	ZTA_HumanJump,
-	ZTA_HumanJumpAndMonkey,
-	ZTA_HumanLongJumpAndMonkey, // von croy
-	ZTA_Spider,
-	ZTA_Blockable, // for trex, shiva, etc..
-	ZTA_SophiaLee, // dont want sophia to go down again !
-	ZTA_Ape, // only 2 click climb
-	ZTA_SkidooArmed
+	// Custom zones (above zones are used for LOT.zone):
+	HumanJumpAndMonkey,
+	HumanJump,
+	Spider,
+	Blockable, // For large creatures such as trex and shiva.
+	SophiaLee, // Prevents Sophia from going to lower levels again.
+	Ape,	   // Only 0.5 block climb.
+	HumanLongJumpAndMonkey,
 };
 
 struct LOTInfo 
 {
 	bool Initialised;
 
-	std::vector<BOX_NODE> Node;
+	vector<BOX_NODE> Node;
 	int Head;
 	int Tail;
 
+	ZoneType Zone = ZoneType::None;
+	Vector3Int Target = Vector3Int::Zero;
 	int SearchNumber;
 	int BlockMask;
 	short Step;
@@ -61,18 +53,16 @@ struct LOTInfo
 	int RequiredBox;
 	short Fly;
 
-	bool CanJump;
-	bool CanMonkey;
-	bool IsJumping;
-	bool IsMonkeying;
-	bool IsAmphibious;
-
-	Vector3Int Target;
-	ZoneType Zone;
+	bool CanJump	  = false;
+	bool CanMonkey	  = false;
+	bool IsJumping	  = false;
+	bool IsMonkeying  = false;
+	bool IsAmphibious = false;
 };
 
 enum class MoodType 
 {
+	None,
 	Bored,
 	Attack,
 	Escape,
@@ -82,45 +72,43 @@ enum class MoodType
 enum class CreatureAIPriority
 {
 	None,
-	High,
+	Low,
 	Medium,
-	Low
+	High
 };
 
 struct CreatureInfo 
 {
-	short ItemNumber;
+	short ItemNumber = -1;
 
-	short MaxTurn;
-	short JointRotation[4];
-	bool HeadLeft;
-	bool HeadRight;
+	LOTInfo	   LOT			  = {};
+	MoodType   Mood			  = MoodType::None;
+	ItemInfo*  Enemy		  = nullptr;
+	ItemInfo*  AITarget		  = nullptr;
+	short	   AITargetNumber = -1;
+	Vector3Int Target		  = Vector3Int::Zero;
 
-	bool Patrol;			// Unused?
-	bool Alerted;
-	bool Friendly;
-	bool HurtByLara;
-	bool Poisoned;
-	bool JumpAhead;
-	bool MonkeySwingAhead;
-	bool ReachedGoal;
+	short MaxTurn = 0;
+	short JointRotation[4] = {};
+	bool HeadLeft = false;
+	bool HeadRight = false;
 
+	bool Patrol			  = false; // Unused?
+	bool Alerted		  = false;
+	bool Friendly		  = false;
+	bool HurtByLara		  = false;
+	bool Poisoned		  = false;
+	bool JumpAhead		  = false;
+	bool MonkeySwingAhead = false;
+	bool ReachedGoal	  = false;
+
+	short FiredWeapon;
 	short Tosspad;
 	short LocationAI;
-	short FiredWeapon;
-
-	LOTInfo LOT;
-	MoodType Mood;
-	ItemInfo* Enemy;
-	short AITargetNumber;
-	ItemInfo* AITarget;
-	short Pad;				// Unused?
-	Vector3Int Target;
+	short Flags = 0;
 
 #ifdef CREATURE_AI_PRIORITY_OPTIMIZATION
-	CreatureAIPriority Priority;
-	size_t FramesSinceLOTUpdate;
+	CreatureAIPriority Priority = CreatureAIPriority::None;
+	size_t FramesSinceLOTUpdate = 0;
 #endif
-
-	short Flags;
 };

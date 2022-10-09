@@ -267,7 +267,7 @@ namespace TEN::Renderer
 				}
 			}
 
-			auto& hairsObj = *m_moveableObjects[ID_LARA_HAIR];
+			auto& hairsObj = *m_moveableObjects[ID_HAIR];
 
 			// First matrix is Lara's head matrix, then all 6 hairs matrices. Bones are adjusted at load time for accounting this.
 			m_stItem.World = Matrix::Identity;
@@ -2224,27 +2224,28 @@ namespace TEN::Renderer
 
 		SetBlendMode(BLENDMODE_ADDITIVE);
 
-		for (int i = 0; i < 2; i++)
-		{
-			auto weather = TEN::Effects::Environment::Weather;
+		for (int s = 0; s < 2; s++)
+			for (int i = 0; i < 2; i++)
+			{
+				auto weather = TEN::Effects::Environment::Weather;
 
-			Matrix translation = Matrix::CreateTranslation(Camera.pos.x + weather.SkyLayer1Position() - i * 9728.0f,
-														   Camera.pos.y - 1536.0f, Camera.pos.z);
-			Matrix world = rotation * translation;
+				Matrix translation = Matrix::CreateTranslation(Camera.pos.x + weather.SkyPosition(s) - i * 9728.0f,
+															   Camera.pos.y - 1536.0f, Camera.pos.z);
+				Matrix world = rotation * translation;
 
-			m_stStatic.World = (rotation * translation);
-			m_stStatic.Color = weather.SkyColor();
-			m_stStatic.AmbientLight = Vector4::One;
-			m_stStatic.LightMode = LIGHT_MODES::LIGHT_MODE_STATIC;
+				m_stStatic.World = (rotation * translation);
+				m_stStatic.Color = weather.SkyColor(s);
+				m_stStatic.AmbientLight = Vector4::One;
+				m_stStatic.LightMode = LIGHT_MODES::LIGHT_MODE_STATIC;
 
-			m_cbStatic.updateData(m_stStatic, m_context.Get());
-			BindConstantBufferVS(CB_STATIC, m_cbStatic.get());
-			BindConstantBufferPS(CB_STATIC, m_cbStatic.get());
+				m_cbStatic.updateData(m_stStatic, m_context.Get());
+				BindConstantBufferVS(CB_STATIC, m_cbStatic.get());
+				BindConstantBufferPS(CB_STATIC, m_cbStatic.get());
 
-			m_primitiveBatch->Begin();
-			m_primitiveBatch->DrawQuad(vertices[0], vertices[1], vertices[2], vertices[3]);
-			m_primitiveBatch->End();
-		}
+				m_primitiveBatch->Begin();
+				m_primitiveBatch->DrawQuad(vertices[0], vertices[1], vertices[2], vertices[3]);
+				m_primitiveBatch->End();
+			}
 		m_context->ClearDepthStencilView(depthTarget, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1, 0);
 
 		// Draw horizon
@@ -2280,8 +2281,9 @@ namespace TEN::Renderer
 					BindTexture(TEXTURE_NORMAL_MAP, &std::get<1>(m_moveablesTextures[bucket.Texture]),
 					            SAMPLER_NONE);
 
-					SetBlendMode(bucket.BlendMode);
-					SetAlphaTest(bucket.BlendMode == BLEND_MODES::BLENDMODE_ALPHATEST ? ALPHA_TEST_GREATER_THAN : ALPHA_TEST_NONE, ALPHA_TEST_THRESHOLD);
+					// Always render horizon as alpha-blended surface
+					SetBlendMode(bucket.BlendMode == BLEND_MODES::BLENDMODE_ALPHATEST ? BLEND_MODES::BLENDMODE_ALPHABLEND : bucket.BlendMode);
+					SetAlphaTest(ALPHA_TEST_NONE, ALPHA_TEST_THRESHOLD);
 
 					// Draw vertices
 					DrawIndexedTriangles(bucket.NumIndices, bucket.StartIndex, 0);

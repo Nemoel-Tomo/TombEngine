@@ -11,10 +11,10 @@
 #include "Game/items.h"
 #include "Game/misc.h"
 
-namespace TEN::Entities::TR5
+namespace TEN::Entities::Creatures::TR5
 {
+	const auto DogBite = BiteInfo(Vector3(0.0f, 0.0f, 100.0f), 3);
 	static BYTE DogAnims[] = { 20, 21, 22, 20 };
-	static BiteInfo DogBite = { 0, 0, 100, 3 };
 
 	void InitialiseTr5Dog(short itemNumber)
 	{
@@ -288,7 +288,7 @@ namespace TEN::Entities::TR5
 					frame <= 14)
 				{
 					DoDamage(creature->Enemy, 20);
-					CreatureEffect2(item, &DogBite, 2, -1, DoBloodSplat);
+					CreatureEffect2(item, DogBite, 2, -1, DoBloodSplat);
 				}
 
 				item->Animation.TargetState = 3;
@@ -305,7 +305,7 @@ namespace TEN::Entities::TR5
 						frame >= 22 && frame <= 25))
 				{
 					DoDamage(creature->Enemy, 10);
-					CreatureEffect2(item, &DogBite, 2, -1, DoBloodSplat);
+					CreatureEffect2(item, DogBite, 2, -1, DoBloodSplat);
 				}
 
 				break;

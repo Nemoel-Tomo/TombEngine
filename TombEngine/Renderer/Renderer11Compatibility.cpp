@@ -147,6 +147,9 @@ namespace TEN::Renderer
 				totalIndices += bucket.numQuads * 6 + bucket.numTriangles * 3;
 			}
 
+		if (!totalVertices || !totalIndices)
+			throw std::exception("Level has no textured room geometry.");
+
 		roomsVertices.resize(totalVertices);
 		roomsIndices.resize(totalIndices);
 
@@ -390,7 +393,7 @@ namespace TEN::Renderer
 					RendererMesh *mesh = GetRendererMeshFromTrMesh(&moveable,
 																   &g_Level.Meshes[obj->meshIndex + j],
 																   j, MoveablesIds[i] == ID_LARA_SKIN_JOINTS,
-																   MoveablesIds[i] == ID_LARA_HAIR, &lastVertex, &lastIndex);
+																   MoveablesIds[i] == ID_HAIR, &lastVertex, &lastIndex);
 					moveable.ObjectMeshes.push_back(mesh);
 				}
 
@@ -556,7 +559,7 @@ namespace TEN::Renderer
 							}
 						}
 					}
-					else if (MoveablesIds[i] == ID_LARA_HAIR && skinPresent)
+					else if (MoveablesIds[i] == ID_HAIR && skinPresent)
 					{
 						hairsPresent = true;
 

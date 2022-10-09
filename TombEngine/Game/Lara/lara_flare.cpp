@@ -30,7 +30,7 @@ void FlareControl(short itemNumber)
 		return;
 	}
 
-	if (flareItem->Animation.VerticalVelocity)
+	if (flareItem->Animation.Velocity.y)
 	{
 		flareItem->Pose.Orientation.x -= ANGLE(5.0f);
 		flareItem->Pose.Orientation.z += ANGLE(5.0f);
@@ -42,9 +42,9 @@ void FlareControl(short itemNumber)
 	}
 
 	auto velocity = Vector3Int(
-		flareItem->Animation.Velocity * phd_sin(flareItem->Pose.Orientation.y),
-		flareItem->Animation.VerticalVelocity,
-		flareItem->Animation.Velocity * phd_cos(flareItem->Pose.Orientation.y)
+		flareItem->Animation.Velocity.z * phd_sin(flareItem->Pose.Orientation.y),
+		flareItem->Animation.Velocity.y,
+		flareItem->Animation.Velocity.z * phd_cos(flareItem->Pose.Orientation.y)
 	);
 
 	auto oldPos = flareItem->Pose.Position;
@@ -53,20 +53,20 @@ void FlareControl(short itemNumber)
 	if (TestEnvironment(ENV_FLAG_WATER, flareItem) ||
 		TestEnvironment(ENV_FLAG_SWAMP, flareItem))
 	{
-		flareItem->Animation.VerticalVelocity += (5 - flareItem->Animation.VerticalVelocity) / 2;
-		flareItem->Animation.Velocity += (5 - flareItem->Animation.Velocity) / 2;
+		flareItem->Animation.Velocity.y += (5 - flareItem->Animation.Velocity.y) / 2;
+		flareItem->Animation.Velocity.z += (5 - flareItem->Animation.Velocity.z) / 2;
 	}
 	else
-		flareItem->Animation.VerticalVelocity += 6;
+		flareItem->Animation.Velocity.y += 6;
 
-	flareItem->Pose.Position.y += flareItem->Animation.VerticalVelocity;
+	flareItem->Pose.Position.y += flareItem->Animation.Velocity.y;
 	DoProjectileDynamics(itemNumber, oldPos.x, oldPos.y, oldPos.z, velocity.x, velocity.y, velocity.z);
 
 	int& life = flareItem->Data;
 	life &= 0x7FFF;
 	if (life >= FLARE_LIFE_MAX)
 	{
-		if (!flareItem->Animation.VerticalVelocity && !flareItem->Animation.Velocity)
+		if (!flareItem->Animation.Velocity.y && !flareItem->Animation.Velocity.z)
 		{
 			KillItem(itemNumber);
 			return;
@@ -107,7 +107,7 @@ void DrawFlareMeshes(ItemInfo* laraItem)
 {
 	auto* lara = GetLaraInfo(laraItem);
 
-	lara->MeshPtrs[LM_LHAND] = Objects[ID_LARA_FLARE_ANIM].meshIndex + LM_LHAND;
+	lara->MeshPtrs[LM_LHAND] = Objects[ID_FLARE_ANIM].meshIndex + LM_LHAND;
 }
 
 void UndrawFlare(ItemInfo* laraItem)
@@ -269,7 +269,7 @@ void DrawFlare(ItemInfo* laraItem)
 void SetFlareArm(ItemInfo* laraItem, int armFrame)
 {
 	auto* lara = GetLaraInfo(laraItem);
-	int flareAnimNum = Objects[ID_LARA_FLARE_ANIM].animIndex;
+	int flareAnimNum = Objects[ID_FLARE_ANIM].animIndex;
 
 	if (armFrame >= 95)
 		flareAnimNum += 4;
@@ -281,7 +281,7 @@ void SetFlareArm(ItemInfo* laraItem, int armFrame)
 		flareAnimNum += 1;
 
 	lara->LeftArm.AnimNumber = flareAnimNum;
-	lara->LeftArm.FrameBase = g_Level.Anims[flareAnimNum].framePtr;
+	lara->LeftArm.FrameBase = g_Level.Anims[flareAnimNum].FramePtr;
 }
 
 void CreateFlare(ItemInfo* laraItem, GAME_OBJECT_ID objectNumber, bool thrown)
@@ -330,17 +330,17 @@ void CreateFlare(ItemInfo* laraItem, GAME_OBJECT_ID objectNumber, bool thrown)
 
 		if (thrown)
 		{
-			flareItem->Animation.Velocity = laraItem->Animation.Velocity + 50;
-			flareItem->Animation.VerticalVelocity = laraItem->Animation.VerticalVelocity - 50;
+			flareItem->Animation.Velocity.z = laraItem->Animation.Velocity.z + 50;
+			flareItem->Animation.Velocity.y = laraItem->Animation.Velocity.y - 50;
 		}
 		else
 		{
-			flareItem->Animation.Velocity = laraItem->Animation.Velocity + 10;
-			flareItem->Animation.VerticalVelocity = laraItem->Animation.VerticalVelocity + 50;
+			flareItem->Animation.Velocity.z = laraItem->Animation.Velocity.z + 10;
+			flareItem->Animation.Velocity.y = laraItem->Animation.Velocity.y + 50;
 		}
 
 		if (landed)
-			flareItem->Animation.Velocity /= 2;
+			flareItem->Animation.Velocity.z /= 2;
 
 		if (objectNumber == ID_FLARE_ITEM)
 		{

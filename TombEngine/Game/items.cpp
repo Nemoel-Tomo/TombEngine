@@ -359,11 +359,11 @@ void KillEffect(short fxNumber)
 			NextFxActive = fx->nextActive;
 		else
 		{
-			for (short linknum = NextFxActive; linknum != NO_ITEM; linknum = EffectList[linknum].nextActive)
+			for (short linkNumber = NextFxActive; linkNumber != NO_ITEM; linkNumber = EffectList[linkNumber].nextActive)
 			{
-				if (EffectList[linknum].nextActive == fxNumber)
+				if (EffectList[linkNumber].nextActive == fxNumber)
 				{
-					EffectList[linknum].nextActive = fx->nextActive;
+					EffectList[linkNumber].nextActive = fx->nextActive;
 					break;
 				}
 			}
@@ -373,11 +373,11 @@ void KillEffect(short fxNumber)
 			g_Level.Rooms[fx->roomNumber].fxNumber = fx->nextFx;
 		else
 		{
-			for (short linknum = g_Level.Rooms[fx->roomNumber].fxNumber; linknum != NO_ITEM; linknum = EffectList[linknum].nextFx)
+			for (short linkNumber = g_Level.Rooms[fx->roomNumber].fxNumber; linkNumber != NO_ITEM; linkNumber = EffectList[linkNumber].nextFx)
 			{
-				if (EffectList[linknum].nextFx == fxNumber)
+				if (EffectList[linkNumber].nextFx == fxNumber)
 				{
-					EffectList[linknum].nextFx = fx->nextFx;
+					EffectList[linkNumber].nextFx = fx->nextFx;
 					break;
 				}
 			}
@@ -388,7 +388,7 @@ void KillEffect(short fxNumber)
 	}
 }
 
-short CreateNewEffect(short roomNum) 
+short CreateNewEffect(short roomNumber) 
 {
 	short fxNumber = NextFxFree;
 
@@ -397,13 +397,14 @@ short CreateNewEffect(short roomNum)
 		auto* fx = &EffectList[NextFxFree];
 		NextFxFree = fx->nextFx;
 
-		auto* room = &g_Level.Rooms[roomNum];
-		fx->roomNumber = roomNum;
+		auto* room = &g_Level.Rooms[roomNumber];
+
+		fx->roomNumber = roomNumber;
 		fx->nextFx = room->fxNumber;
 		room->fxNumber = fxNumber;
 		fx->nextActive = NextFxActive;
 		NextFxActive = fxNumber;
-		fx->shade = GRAY555;
+		fx->color = Vector4::One;
 	}
 
 	return fxNumber;
@@ -483,11 +484,8 @@ void InitialiseItem(short itemNumber)
 	item->Animation.TargetState = g_Level.Anims[item->Animation.AnimNumber].ActiveState;
 	item->Animation.ActiveState = g_Level.Anims[item->Animation.AnimNumber].ActiveState;
 
-	item->Pose.Orientation.z = 0;
-	item->Pose.Orientation.x = 0;
-
-	item->Animation.VerticalVelocity = 0;
-	item->Animation.Velocity = 0;
+	item->Animation.Velocity.y = 0;
+	item->Animation.Velocity.z = 0;
 
 	item->ItemFlags[3] = 0;
 	item->ItemFlags[2] = 0;
@@ -572,14 +570,17 @@ short CreateItem()
 
 void InitialiseItemArray(int totalItem)
 {
-	auto* item = &g_Level.Items[g_Level.NumItems];
+	g_Level.Items.clear();
+	g_Level.Items.resize(totalItem);
 
-	NextItemActive = NO_ITEM;
-	NextItemFree = g_Level.NumItems;
+	for (int i = 0; i < totalItem; i++)
+		g_Level.Items[i].Index = i;
+
+	auto* item = &g_Level.Items[g_Level.NumItems];
 
 	if (g_Level.NumItems + 1 < totalItem)
 	{
-		for(int i = g_Level.NumItems + 1; i < totalItem; i++, item++)
+		for (int i = g_Level.NumItems + 1; i < totalItem; i++, item++)
 		{
 			item->NextItem = i;
 			item->Active = false;
@@ -588,6 +589,8 @@ void InitialiseItemArray(int totalItem)
 	}
 
 	item->NextItem = NO_ITEM;
+	NextItemActive = NO_ITEM;
+	NextItemFree = g_Level.NumItems;
 }
 
 short SpawnItem(ItemInfo* item, GAME_OBJECT_ID objectNumber)
@@ -631,21 +634,17 @@ int GlobalItemReplace(short search, GAME_OBJECT_ID replace)
 }
 
 // Offset values may be used to account for the quirk of room traversal only being able to occur at portals.
-// Note: may not work for dynamic items because of FindItem.
 void UpdateItemRoom(ItemInfo* item, int height, int xOffset, int zOffset)
 {
-	float sinY = phd_sin(item->Pose.Orientation.y);
-	float cosY = phd_cos(item->Pose.Orientation.y);
+	auto point = TranslateVector(item->Pose.Position, item->Pose.Orientation.y, zOffset, height, xOffset);
 
-	int x = (int)round(item->Pose.Position.x + ((cosY * xOffset) + (sinY * zOffset)));
-	int y = height + item->Pose.Position.y;
-	int z = (int)round(item->Pose.Position.z + ((-sinY * xOffset) + (cosY * zOffset)));
-
-	item->Location = GetRoom(item->Location, x, y, z);
-	item->Floor = GetFloorHeight(item->Location, x, z).value_or(NO_HEIGHT);
+	// Hacky L-shaped Location traversal.
+	item->Location = GetRoom(item->Location, point.x, point.y, point.z);
+	item->Location = GetRoom(item->Location, item->Pose.Position.x, point.y, item->Pose.Position.z);
+	item->Floor = GetFloorHeight(item->Location, item->Pose.Position.x, item->Pose.Position.z).value_or(NO_HEIGHT);
 
 	if (item->RoomNumber != item->Location.roomNumber)
-		ItemNewRoom(FindItem(item), item->Location.roomNumber);
+		ItemNewRoom(item->Index, item->Location.roomNumber);
 }
 
 std::vector<int> FindAllItems(short objectNumber)
@@ -671,7 +670,7 @@ ItemInfo* FindItem(int objectNumber)
 			return item;
 	}
 
-	return 0;
+	return nullptr;
 }
 
 int FindItem(ItemInfo* item)

@@ -31,7 +31,6 @@ using namespace TEN::Effects::Spark;
 
 namespace Effects
 {
-
 	///Emit a lightning arc.
 	//@function EmitLightningArc
 	//@tparam Vec3 src
@@ -107,7 +106,7 @@ namespace Effects
 	@tparam float rot (default 0) specifies a speed with which it will rotate (0 = no rotation, negative = anticlockwise rotation, positive = clockwise rotation).
 	@tparam Color startColor (default Color(255, 255, 255)) color at start of life
 	@tparam Color endColor (default Color(255, 255, 255)) color to fade to - at the time of writing this fade will finish long before the end of the particle's life due to internal maths
-	@tparam BlendID blendMode (default TEN.Misc.BlendID.ALPHABLEND) How will we blend this with its surroundings?
+	@tparam BlendID blendMode (default TEN.Effects.BlendID.ALPHABLEND) How will we blend this with its surroundings?
 	@tparam int startSize (default 10) Size on spawn. A value of 15 is approximately the size of Lara's head.
 	@tparam int endSize (default 0) Size on death - the particle will linearly shrink or grow to this size during its lifespan
 	@tparam float lifetime (default 2) Lifespan in seconds 
@@ -122,7 +121,7 @@ namespace Effects
 		-2, -- rot
 		Color(255, 0, 0), -- startColor
 		Color(0,  255, 0), -- endColor
-		TEN.Misc.BlendID.ADDITIVE, -- blendMode
+		TEN.Effects.BlendID.ADDITIVE, -- blendMode
 		15, -- startSize
 		50, -- endSize
 		20, -- lifetime
@@ -328,7 +327,8 @@ namespace Effects
 		Weather.Flash(color.GetR(), color.GetG(), color.GetB(), (USE_IF_HAVE(float, speed, 1.0))/ float(FPS));
 	}
 
-	void Register(sol::state* state, sol::table& parent) {
+	void Register(sol::state* state, sol::table& parent) 
+	{
 		sol::table table_effects{ state->lua_state(), sol::create };
 		parent.set(ScriptReserved_Effects, table_effects);
 

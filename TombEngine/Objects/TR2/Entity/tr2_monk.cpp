@@ -11,7 +11,7 @@
 #include "Specific/level.h"
 #include "Specific/setup.h"
 
-namespace TEN::Entities::TR2
+namespace TEN::Entities::Creatures::TR2
 {
 	const auto MonkBite = BiteInfo(Vector3(-23.0f, 16.0f, 265.0f), 14);
 
@@ -59,7 +59,7 @@ namespace TEN::Entities::TR2
 			CreatureAIInfo(item, &AI);
 
 			if (!MonksAttackLara && creature->Enemy == LaraItem)
-				creature->Enemy = NULL;
+				creature->Enemy = nullptr;
 
 			GetCreatureMood(item, &AI, true);
 			CreatureMood(item, &AI, true);

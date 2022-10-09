@@ -7,6 +7,7 @@
 #include "Game/effects/tomb4fx.h"
 #include "Game/effects/effects.h"
 #include "Game/effects/explosion.h"
+#include "Game/effects/bubble.h"
 #include "Game/Lara/lara.h"
 #include "Game/items.h"
 #include "Sound/sound.h"
@@ -56,7 +57,7 @@ void ControlMissile(short fxNumber)
 	fx->pos.Position.x += velocity * phd_sin(fx->pos.Orientation.y);
 
 	auto probe = GetCollision(fx->pos.Position.x, fx->pos.Position.y, fx->pos.Position.z, fx->roomNumber);
-	auto hitLara = ItemNearLara(&fx->pos, 200);
+	auto hitLara = ItemNearLara(&fx->pos.Position, 200);
 
 	// Check for hitting something.
 	if (fx->pos.Position.y >= probe.Position.Floor ||
@@ -102,7 +103,7 @@ void ControlMissile(short fxNumber)
 
 			LaraItem->HitStatus = 1; // TODO: Make ControlMissile() not use LaraItem global. -- TokyoSU, 5/8/2022
 			fx->pos.Orientation.y = LaraItem->Pose.Orientation.y;
-			fx->speed = LaraItem->Animation.Velocity;
+			fx->speed = LaraItem->Animation.Velocity.z;
 			fx->frameNumber = fx->counter = 0;
 		}
 	}
@@ -113,15 +114,18 @@ void ControlMissile(short fxNumber)
 	if (fx->objectNumber == ID_KNIFETHROWER_KNIFE)
 		fx->pos.Orientation.z += ANGLE(3.0f); // update knife rotation overtime
 
-	// Create bubbles in wake of harpoon bolt.
-	//if (fx->objectNumber == ID_SCUBA_HARPOON && g_Level.Rooms[fx->roomNumber].flags & 1)
-	//	CreateBubble(&fx->pos, fx->roomNumber, 1, 0);
-	/*if (fx->objectNumber == DRAGON_FIRE && !fx->counter--)
+
+	switch (fx->objectNumber)
 	{
-		AddDynamicLight(fx->pos.Position.x, fx->pos.Position.y, fx->pos.Position.z, 14, 11);
-		SoundEffect(305, &fx->pos);
-		KillEffect(fx_number);
-	}*/
+	case ID_SCUBA_HARPOON:
+		if (TestEnvironment(RoomEnvFlags::ENV_FLAG_WATER, fx->roomNumber))
+			CreateBubble(&fx->pos.Position, fx->roomNumber, 1, 0, 0, 0, 0, 0);
+		break;
+
+	case ID_PROJ_BOMB:
+		TriggerDynamicLight(fx->pos.Position.x, fx->pos.Position.y, fx->pos.Position.z, 14, 180, 100, 0);
+		break;
+	}
 }
 
 void ControlNatlaGun(short fxNumber)
@@ -182,7 +186,7 @@ short ShardGun(int x, int y, int z, short velocity, short yRot, short roomNumber
 		fx->speed = velocity;
 		fx->frameNumber = 0;
 		fx->objectNumber = ID_PROJ_SHARD;
-		fx->shade = 14 * 256;
+		fx->color = Vector4::One;
 		ShootAtLara(fx);
 	}
 
@@ -205,7 +209,7 @@ short BombGun(int x, int y, int z, short velocity, short yRot, short roomNumber)
 		fx->speed = velocity;
 		fx->frameNumber = 0;
 		fx->objectNumber = ID_PROJ_BOMB;
-		fx->shade = 16 * 256;
+		fx->color = Vector4::One;
 		ShootAtLara(fx);
 	}
 
@@ -228,7 +232,7 @@ short NatlaGun(int x, int y, int z, short velocity, short yRot, short roomNumber
 		fx->speed = velocity;
 		fx->frameNumber = 0;
 		fx->objectNumber = ID_PROJ_NATLA;
-		fx->shade = 16 * 256;
+		fx->color = Vector4::One;
 		ShootAtLara(fx);
 	}
 

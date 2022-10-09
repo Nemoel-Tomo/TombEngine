@@ -1452,8 +1452,6 @@ void ExplodingDeath(short itemNumber, short flags)
 		obj = &Objects[ID_LARA_SKIN];
 	else
 		obj = &Objects[item->ObjectNumber];
-
-	ANIM_FRAME* frame = GetBestFrame(item);
 	
 	Matrix world = Matrix::CreateFromYawPitchRoll(
 		TO_RAD(item->Pose.Orientation.y),
@@ -1506,7 +1504,7 @@ void ExplodingDeath(short itemNumber, short flags)
 				}
 
 				fx->objectNumber = ID_BODY_PART;
-				fx->shade = 16912;
+				fx->color = item->Color;
 				fx->flag2 = flags;
 				fx->frameNumber = obj->meshIndex + i;
 			}
@@ -1630,7 +1628,7 @@ void UpdateShockwaves()
 				{
 					if (sw->flags & 3)
 					{
-						ANIM_FRAME* frame = GetBestFrame(LaraItem);
+						AnimFrame* frame = GetBestFrame(LaraItem);
 
 						int dx = LaraItem->Pose.Position.x - sw->x;
 						int dz = LaraItem->Pose.Position.z - sw->z;

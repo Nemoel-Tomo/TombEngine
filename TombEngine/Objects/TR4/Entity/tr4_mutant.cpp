@@ -12,8 +12,11 @@
 #include "Objects/Effects/tr4_locusts.h"
 #include "Objects/objectslist.h"
 #include "Renderer/Renderer11Enums.h"
+#include "Specific/prng.h"
 #include "Specific/setup.h"
 #include "Specific/trmath.h"
+
+using namespace TEN::Math::Random;
 
 namespace TEN::Entities::TR4
 {
@@ -121,7 +124,7 @@ namespace TEN::Entities::TR4
 		sptr->flags = SP_EXPDEF | SP_ROTATE | SP_DEF | SP_SCALE;
 		sptr->rotAng = GetRandomControl() & 0xFFF;
 
-		if (GetRandomControl() & 1)
+		if (TestProbability(0.5f))
 			sptr->rotAdd = (GetRandomControl() & 0x1F) - 32;
 		else
 			sptr->rotAdd = (GetRandomControl() & 0x1F) + 32;
@@ -178,7 +181,7 @@ namespace TEN::Entities::TR4
 		}
 
 		auto* enemy = creature->Enemy;
-		auto pos = Vector3Int();
+		auto pos = Vector3Int::Zero;
 		GetJointAbsPosition(item, &pos, joint);
 
 		int x = enemy->Pose.Position.x - pos.x;
@@ -300,12 +303,11 @@ namespace TEN::Entities::TR4
 		case MUTANT_STATE_IDLE:
 			if (AI.ahead)
 			{
-				int random = GetRandomControl() & 31;
-				if ((random > 0 && random < 10) && AI.distance <= MUTANT_PROJECTILE_ATTACK_RANGE)
+				if (TestProbability(0.28f) && AI.distance <= MUTANT_PROJECTILE_ATTACK_RANGE)
 					item->Animation.TargetState = MUTANT_STATE_PROJECTILE_ATTACK;
-				else if ((random > 10 && random < 20) && AI.distance <= MUTANT_LOCUST_ATTACK_1_RANGE)
+				else if (TestProbability(0.28f) && AI.distance <= MUTANT_LOCUST_ATTACK_1_RANGE)
 					item->Animation.TargetState = MUTANT_STATE_LOCUST_ATTACK_1;
-				else if ((random > 20 && random < 30) && AI.distance <= MUTANT_LOCUST_ATTACK_2_RANGE)
+				else if (TestProbability(0.28f) && AI.distance <= MUTANT_LOCUST_ATTACK_2_RANGE)
 					item->Animation.TargetState = MUTANT_STATE_LOCUST_ATTACK_2;
 			}
 

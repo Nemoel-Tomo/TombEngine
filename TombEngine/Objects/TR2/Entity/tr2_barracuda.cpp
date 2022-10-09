@@ -12,7 +12,7 @@
 
 using std::vector;
 
-namespace TEN::Entities::TR2
+namespace TEN::Entities::Creatures::TR2
 {
 	constexpr auto BARRACUDA_ATTACK_DAMAGE = 100;
 	constexpr auto BARRACUDA_IDLE_ATTACK_RANGE		= SQUARE(SECTOR(0.67f));
@@ -23,7 +23,7 @@ namespace TEN::Entities::TR2
 
 	enum BarracudaState
 	{
-		BARRACUDA_STATE_NONE = 0,
+		// No state 0.
 		BARRACUDA_STATE_IDLE = 1,
 		BARRACUDA_STATE_SWIM_SLOW = 2,
 		BARRACUDA_STATE_SWIM_FAST = 3,
@@ -92,7 +92,7 @@ namespace TEN::Entities::TR2
 			switch (item->Animation.ActiveState)
 			{
 			case BARRACUDA_STATE_IDLE:
-				creature->Flags = NULL;
+				creature->Flags = 0;
 
 				if (creature->Mood == MoodType::Bored)
 					item->Animation.TargetState = BARRACUDA_STATE_SWIM_SLOW;
@@ -119,7 +119,7 @@ namespace TEN::Entities::TR2
 
 			case BARRACUDA_STATE_SWIM_FAST:
 				creature->MaxTurn = ANGLE(4.0f);
-				creature->Flags = NULL;
+				creature->Flags = 0;
 
 				if (creature->Mood == MoodType::Bored)
 					item->Animation.TargetState = BARRACUDA_STATE_SWIM_SLOW;

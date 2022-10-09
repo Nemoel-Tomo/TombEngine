@@ -250,8 +250,8 @@ namespace TEN::Entities::Vehicles
 			harpoonItem->Pose.Orientation = Vector3Shrt(UPVItem->Pose.Orientation.x, UPVItem->Pose.Orientation.y, 0);
 
 			// TODO: Huh?
-			harpoonItem->Animation.VerticalVelocity = -UPV_HARPOON_VELOCITY * phd_sin(harpoonItem->Pose.Orientation.x);
-			harpoonItem->Animation.Velocity = UPV_HARPOON_VELOCITY * phd_cos(harpoonItem->Pose.Orientation.x);
+			harpoonItem->Animation.Velocity.y = -UPV_HARPOON_VELOCITY * phd_sin(harpoonItem->Pose.Orientation.x);
+			harpoonItem->Animation.Velocity.z = UPV_HARPOON_VELOCITY * phd_cos(harpoonItem->Pose.Orientation.x);
 			harpoonItem->HitPoints = HARPOON_TIME;
 			harpoonItem->ItemFlags[0] = 1;
 
@@ -334,7 +334,7 @@ namespace TEN::Entities::Vehicles
 
 			if (UPV->Velocity)
 			{
-				pos = Vector3Int(UPVBites[UPV_BITE_TURBINE].x, UPVBites[UPV_BITE_TURBINE].y, UPVBites[UPV_BITE_TURBINE].z);
+				pos = Vector3Int(UPVBites[UPV_BITE_TURBINE].Position);
 				GetJointAbsPosition(UPVItem, &pos, UPVBites[UPV_BITE_TURBINE].meshNum);
 
 				TriggerUPVMist(pos.x, pos.y + UPV_SHIFT, pos.z, abs(UPV->Velocity) / VEHICLE_VELOCITY_SCALE, UPVItem->Pose.Orientation.y + ANGLE(180.0f));
@@ -356,7 +356,8 @@ namespace TEN::Entities::Vehicles
 		for (int lp = 0; lp < 2; lp++)
 		{
 			int random = 31 - (GetRandomControl() & 3);
-			pos = Vector3Int(UPVBites[UPV_BITE_FRONT_LIGHT].x, UPVBites[UPV_BITE_FRONT_LIGHT].y, UPVBites[UPV_BITE_FRONT_LIGHT].z << (lp * 6));
+			pos = Vector3Int(UPVBites[UPV_BITE_FRONT_LIGHT].Position);
+			pos.z <<= (lp * 6);
 			GetJointAbsPosition(UPVItem, &pos, UPVBites[UPV_BITE_FRONT_LIGHT].meshNum);
 
 			GameVector source;
@@ -442,16 +443,14 @@ namespace TEN::Entities::Vehicles
 		else
 		{
 			int sinkVal = lara->WaterCurrentActive - 1;
-			target.x = g_Level.Sinks[sinkVal].x;
-			target.y = g_Level.Sinks[sinkVal].y;
-			target.z = g_Level.Sinks[sinkVal].z;
+			target = g_Level.Sinks[sinkVal].Position;
 		
 			int angle = ((mGetAngle(target.x, target.z, laraItem->Pose.Position.x, laraItem->Pose.Position.z) - ANGLE(90.0f)) / 16) & 4095;
 
 			int dx = target.x - laraItem->Pose.Position.x;
 			int dz = target.z - laraItem->Pose.Position.z;
 
-			int velocity = g_Level.Sinks[sinkVal].strength;
+			int velocity = g_Level.Sinks[sinkVal].Strength;
 			dx = phd_sin(angle * 16) * velocity * SECTOR(1);
 			dz = phd_cos(angle * 16) * velocity * SECTOR(1);
 
@@ -741,7 +740,7 @@ namespace TEN::Entities::Vehicles
 				laraItem->Pose.Position = Vector3Int(LPos.x, LPos.y, LPos.z);
 
 				SetAnimation(laraItem, LA_UNDERWATER_IDLE);
-				laraItem->Animation.VerticalVelocity = 0;
+				laraItem->Animation.Velocity.y = 0;
 				laraItem->Animation.IsAirborne = false;
 				laraItem->Pose.Orientation.x = laraItem->Pose.Orientation.z = 0;
 
@@ -780,7 +779,7 @@ namespace TEN::Entities::Vehicles
 
 				SetAnimation(laraItem, LA_ONWATER_IDLE);
 				laraItem->Animation.IsAirborne = false;
-				laraItem->Animation.VerticalVelocity = 0;
+				laraItem->Animation.Velocity.y = 0;
 				laraItem->Pose.Orientation.x = 0;
 				laraItem->Pose.Orientation.z = 0;
 
@@ -816,12 +815,12 @@ namespace TEN::Entities::Vehicles
 
 				SetAnimation(laraItem, LA_UNDERWATER_DEATH, 17);
 				laraItem->Animation.IsAirborne = false;
-				laraItem->Animation.VerticalVelocity = 0;
+				laraItem->Animation.Velocity.y = 0;
 			
 				UPV->Flags |= UPV_FLAG_DEAD;
 			}
 
-			UPVItem->Animation.Velocity = 0;
+			UPVItem->Animation.Velocity.z = 0;
 			break;
 		}
 
@@ -891,7 +890,7 @@ namespace TEN::Entities::Vehicles
 		{
 			UPVControl(UPVItem, laraItem);
 
-			UPVItem->Animation.Velocity = UPV->Velocity / VEHICLE_VELOCITY_SCALE;
+			UPVItem->Animation.Velocity.z = UPV->Velocity / VEHICLE_VELOCITY_SCALE;
 			UPVItem->Pose.Orientation += UPV->TurnRate;
 
 			if (UPVItem->Pose.Orientation.x > UPV_X_ORIENT_MAX)
@@ -902,7 +901,7 @@ namespace TEN::Entities::Vehicles
 			if (!(TrInput & IN_LEFT ) && !(TrInput & IN_RIGHT))
 				ResetVehicleLean(UPVItem, 12.0f);
 
-			TranslateItem(UPVItem, UPVItem->Pose.Orientation, UPVItem->Animation.Velocity);
+			TranslateItem(UPVItem, UPVItem->Pose.Orientation, UPVItem->Animation.Velocity.z);
 		}
 
 		int newHeight = GetCollision(UPVItem).Position.Floor;
@@ -912,7 +911,7 @@ namespace TEN::Entities::Vehicles
 			(newHeight == NO_HEIGHT) || (waterHeight == NO_HEIGHT))
 		{
 			UPVItem->Pose.Position = oldPos.Position;
-			UPVItem->Animation.Velocity = 0;
+			UPVItem->Animation.Velocity.z = 0;
 		}
 
 		UPVItem->Floor = probe.Position.Floor;
@@ -1006,7 +1005,7 @@ namespace TEN::Entities::Vehicles
 			DoVehicleCollision(UPVItem, UPV_RADIUS);
 
 			if (UPV->Flags & UPV_FLAG_CONTROL)
-				SoundEffect(SFX_TR3_VEHICLE_UPV_LOOP, (PHD_3DPOS*)&UPVItem->Pose.Position.x, SoundEnvironment::Always, 1.0f + (float)UPVItem->Animation.Velocity / 96.0f);
+				SoundEffect(SFX_TR3_VEHICLE_UPV_LOOP, (PHD_3DPOS*)&UPVItem->Pose.Position.x, SoundEnvironment::Always, 1.0f + (float)UPVItem->Animation.Velocity.z / 96.0f);
 
 			UPVItem->Animation.AnimNumber = Objects[ID_UPV].animIndex + (laraItem->Animation.AnimNumber - Objects[ID_UPV_LARA_ANIMS].animIndex);
 			UPVItem->Animation.FrameNumber = g_Level.Anims[UPVItem->Animation.AnimNumber].frameBase + (laraItem->Animation.FrameNumber - g_Level.Anims[laraItem->Animation.AnimNumber].frameBase);
@@ -1030,8 +1029,8 @@ namespace TEN::Entities::Vehicles
 			UPV->TurnRate.x = 0;
 
 			SetAnimation(UPVItem, UPV_ANIM_IDLE);
-			UPVItem->Animation.VerticalVelocity = 0;
-			UPVItem->Animation.Velocity = 0;
+			UPVItem->Animation.Velocity.y = 0;
+			UPVItem->Animation.Velocity.z = 0;
 			UPVItem->Animation.IsAirborne = true;
 			AnimateItem(UPVItem);
 

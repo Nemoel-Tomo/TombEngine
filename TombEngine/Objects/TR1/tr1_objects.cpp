@@ -1,7 +1,6 @@
 #include "framework.h"
 #include "Objects/TR1/tr1_objects.h"
 
-/// necessary import
 #include "Game/control/box.h"
 #include "Game/collision/collide_item.h"
 #include "Game/itemdata/creature_info.h"
@@ -9,7 +8,7 @@
 #include "Specific/setup.h"
 #include "Specific/level.h"
 
-/// entities
+// Creatures
 #include "Objects/TR1/Entity/tr1_ape.h" // OK
 #include "Objects/TR1/Entity/tr1_bear.h" // OK
 #include "Objects/TR1/Entity/tr1_doppelganger.h" // OK
@@ -21,7 +20,7 @@
 #include "Objects/TR1/Entity/tr1_winged_mutant.h"
 #include "Objects/Utils/object_helper.h"
 
-using namespace TEN::Entities::TR1;
+using namespace TEN::Entities::Creatures::TR1;
 
 static void StartEntity(ObjectInfo* obj)
 {
@@ -41,7 +40,6 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveHitpoints = true;
 		obj->saveAnim = true;
 		obj->saveFlags = true;
-		obj->zoneType = ZTA_Basic;
 		obj->SetBoneRotation(2, ROT_Y); // head
 	}
 
@@ -61,7 +59,6 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveHitpoints = true;
 		obj->saveAnim = true;
 		obj->saveFlags = true;
-		obj->zoneType = ZTA_Basic;
 		obj->SetBoneRotation(13, ROT_Y); // head
 	}
 
@@ -80,7 +77,7 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveHitpoints = true;
 		obj->saveAnim = true;
 		obj->saveFlags = true;
-		obj->zoneType = ZTA_Ape;
+		obj->ZoneType = ZoneType::Ape;
 	}
 
 	obj = &Objects[ID_BIG_RAT];
@@ -100,7 +97,7 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveAnim = true;
 		obj->saveFlags = true;
 		obj->waterCreature = true;
-		obj->zoneType = ZTA_Croc;
+		obj->ZoneType = ZoneType::Water;
 		obj->SetBoneRotation(1, ROT_Y); // head
 	}
 
@@ -119,7 +116,6 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveFlags = true;
 		obj->savePosition = true;
 		obj->saveHitpoints = true;
-		obj->zoneType = ZTA_Basic;
 		obj->SetBoneRotation(2, ROT_X | ROT_Z);
 	}
 
@@ -138,11 +134,10 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveFlags = true;
 		obj->savePosition = true;
 		obj->saveHitpoints = true;
-		obj->zoneType = ZTA_Blockable;
 		obj->SetBoneRotation(1, ROT_Y);
 	}
 
-	obj = &Objects[ID_LARA_DOPPELGANGER];
+	obj = &Objects[ID_DOPPELGANGER];
 	if (obj->loaded)
 	{
 		if (Objects[ID_LARA].loaded)
@@ -160,7 +155,6 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveFlags = true;
 		obj->savePosition = true;
 		obj->saveHitpoints = true;
-		obj->zoneType = ZTA_Basic;
 	}
 
 	obj = &Objects[ID_CENTAUR_MUTANT];
@@ -179,8 +173,8 @@ static void StartEntity(ObjectInfo* obj)
 		obj->saveHitpoints = true;
 		obj->saveAnim = true;
 		obj->saveFlags = true;
-		obj->zoneType = ZTA_Blockable;
-		obj->SetBoneRotation(10, ROT_X|ROT_Y);
+		obj->ZoneType = ZoneType::Blockable;
+		obj->SetBoneRotation(10, ROT_X | ROT_Y);
 	}
 
 	obj = &Objects[ID_WINGED_MUMMY];
@@ -193,13 +187,13 @@ static void StartEntity(ObjectInfo* obj)
 		obj->hitEffect = HIT_BLOOD;
 		obj->pivotLength = 150;
 		obj->radius = WALL_SIZE / 3;
-		obj->HitPoints = 1; // 50
+		obj->HitPoints = 50;
 		obj->intelligent = true;
 		obj->saveAnim = true;
 		obj->saveFlags = true;
 		obj->saveHitpoints = true;
 		obj->savePosition = true;
-		obj->zoneType = ZTA_Fly;
+		obj->ZoneType = ZoneType::Flyer;
 		obj->SetBoneRotation(1, ROT_Y); // torso
 		obj->SetBoneRotation(2, ROT_Y); // head
 	}

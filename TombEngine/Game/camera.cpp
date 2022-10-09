@@ -95,10 +95,9 @@ void LookAt(CAMERA_INFO* cam, short roll)
 	float fov = TO_RAD(CurrentFOV / 1.333333f);
 	float r = TO_RAD(roll);
 
-	float gameFarView  = g_GameFlow->GetGameFarView() * float(SECTOR(1));
 	float levelFarView = g_GameFlow->GetLevel(CurrentLevel)->GetFarView() * float(SECTOR(1));
 
-	g_Renderer.UpdateCameraMatrices(cam, r, fov, std::min(gameFarView, levelFarView));
+	g_Renderer.UpdateCameraMatrices(cam, r, fov, levelFarView);
 }
 
 void AlterFOV(int value)
@@ -780,15 +779,12 @@ void FixedCamera(ItemInfo* item)
 	}
 	else
 	{
-		LEVEL_CAMERA_INFO* camera = &g_Level.Cameras[Camera.number];
+		auto* camera = &g_Level.Cameras[Camera.number];
 
-		from.x = camera->x;
-		from.y = camera->y;
-		from.z = camera->z;
-		from.roomNumber = camera->roomNumber;
+		from = GameVector(camera->Position, camera->RoomNumber);
 
 		// Multiply original speed by 8 to comply with original bitshifted speed from TR1-2
-		moveSpeed = camera->speed * 8 + 1;
+		moveSpeed = camera->Speed * 8 + 1;
 	}
 
 	Camera.fixedCamera = true;
@@ -1462,7 +1458,7 @@ void CalculateCamera()
 	auto* bounds = GetBoundsAccurate(item);
 
 	int x;
-	int y = ((bounds->Y1 + bounds->Y2) / 2) + item->Pose.Position.y - CLICK(1);
+	int y = item->Pose.Position.y + bounds->Y2 + (3 * (bounds->Y1 - bounds->Y2) / 4);
 	int z;
 
 	if (Camera.item)
@@ -1855,10 +1851,10 @@ static bool CheckStaticCollideCamera(MESH_INFO* mesh)
 	if (!(mesh->flags & StaticMeshFlags::SM_VISIBLE))
 		return false;
 
-	auto stat = &StaticObjects[mesh->staticNumber];
-	auto extents = Vector3(abs(stat->collisionBox.X1 - stat->collisionBox.X2),
-		abs(stat->collisionBox.Y1 - stat->collisionBox.Y2),
-		abs(stat->collisionBox.Z1 - stat->collisionBox.Z2));
+	auto bounds = GetBoundsAccurate(mesh, false);
+	auto extents = Vector3(abs(bounds->X1 - bounds->X2),
+						   abs(bounds->Y1 - bounds->Y2),
+						   abs(bounds->Z1 - bounds->Z2));
 
 	// Check extents, if any 2 bounds are smaller than threshold, discard.
 	if ((abs(extents.x) < COLL_DISCARD_THRESHOLD && abs(extents.y) < COLL_DISCARD_THRESHOLD) ||
@@ -1930,9 +1926,7 @@ void ItemsCollideCamera()
 	for (int i = 0; i < staticList.size(); i++)
 	{
 		auto mesh = staticList[i];
-		auto stat = &StaticObjects[mesh->staticNumber];
-
-		if (!mesh || !stat)
+		if (!mesh)
 			return;
 
 		auto dx = abs(LaraItem->Pose.Position.x - mesh->pos.Position.x);
@@ -1942,7 +1936,7 @@ void ItemsCollideCamera()
 		if (dx > COLL_CANCEL_THRESHOLD || dz > COLL_CANCEL_THRESHOLD || dy > COLL_CANCEL_THRESHOLD)
 			continue;
 
-		auto bounds = &stat->collisionBox;
+		auto bounds = GetBoundsAccurate(mesh, false);
 		if (TestBoundsCollideCamera(bounds, &mesh->pos, CAMERA_RADIUS))
 			ItemPushCamera(bounds, &mesh->pos, rad);
 

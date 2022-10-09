@@ -18,8 +18,10 @@
 
 using namespace TEN::Effects::Lightning;
 
-namespace TEN::Entities::TR5
+namespace TEN::Entities::Creatures::TR5
 {
+	const auto RomanStatueBite = BiteInfo(Vector3::Zero, 15);
+
 	struct RomanStatueInfo
 	{
 		Vector3Int Position;
@@ -28,7 +30,6 @@ namespace TEN::Entities::TR5
 	};
 
 	RomanStatueInfo RomanStatueData;
-	BiteInfo RomanStatueBite{ 0, 0, 0, 15 };
 
 	// TODO
 	enum RomanStatueState
@@ -76,7 +77,7 @@ namespace TEN::Entities::TR5
 				fx->speed = 1;
 				fx->fallspeed = 0;
 				fx->objectNumber = ID_BODY_PART;
-				fx->shade = 16912;
+				fx->color = Vector4::One;
 				fx->flag2 = 9729;
 				fx->frameNumber = Objects[ID_BUBBLES].meshIndex + (GetRandomControl() & 7);
 				fx->counter = 0;
@@ -594,7 +595,6 @@ namespace TEN::Entities::TR5
 									ShatterObject(0, mesh, -64, LaraItem->RoomNumber, 0);
 									SoundEffect(GetShatterSound(mesh->staticNumber), (PHD_3DPOS*)mesh);
 
-									mesh->flags &= ~StaticMeshFlags::SM_VISIBLE;
 									floor->Stopper = false;
 
 									TestTriggers(pos.x, pos.y, pos.z, item->RoomNumber, true);
@@ -608,7 +608,7 @@ namespace TEN::Entities::TR5
 						if (item->TouchBits & 0xC000)
 						{
 							DoDamage(creature->Enemy, 200);
-							CreatureEffect2(item, &RomanStatueBite, 20, item->Pose.Orientation.y, DoBloodSplat);
+							CreatureEffect2(item, RomanStatueBite, 20, item->Pose.Orientation.y, DoBloodSplat);
 							SoundEffect(SFX_TR4_LARA_THUD, &item->Pose);
 							creature->Flags = 1;
 						}

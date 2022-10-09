@@ -129,6 +129,8 @@ namespace TEN::Renderer
 		int RoomNumber;
 		Vector3 Position;
 		Matrix World;
+		Vector4 Color;
+		Vector4 AmbientLight;
 		RendererMesh* Mesh;
 		std::vector<RendererLight*> LightsToDraw;
 	};
@@ -442,7 +444,7 @@ namespace TEN::Renderer
 		
 		void BuildHierarchy(RendererObject* obj);
 		void BuildHierarchyRecursive(RendererObject* obj, RendererBone* node, RendererBone* parentNode);
-		void UpdateAnimation(RendererItem* item, RendererObject& obj, ANIM_FRAME** frmptr, short frac, short rate,
+		void UpdateAnimation(RendererItem* item, RendererObject& obj, AnimFrame** frmptr, short frac, short rate,
 		                     int mask, bool useObjectWorldRotation = false);
 		void GetVisibleObjects(RenderView& renderView, bool onlyRooms);
 		void GetRoomBounds(RenderView& renderView, bool onlyRooms);
@@ -464,7 +466,7 @@ namespace TEN::Renderer
 		void UpdateItemAnimations(RenderView& view);
 		bool PrintDebugMessage(int x, int y, int alpha, byte r, byte g, byte b, LPCSTR Message);
 
-		void InitialiseScreen(int w, int h, bool windowed, HWND handle, bool reset);
+		void InitialiseScreen(int w, int h, HWND handle, bool reset);
 		void InitialiseGameBars();
 		void InitialiseMenuBars(int y);
 
@@ -623,6 +625,7 @@ namespace TEN::Renderer
 		void UpdateProgress(float value);
 		void GetLaraBonePosition(Vector3* pos, int bone);
 		void ToggleFullScreen(bool force = false);
+		void SetFullScreen();
 		bool IsFullsScreen();
 		void RenderTitleImage();
 		void AddLine2D(int x1, int y1, int x2, int y2, byte r, byte g, byte b, byte a);

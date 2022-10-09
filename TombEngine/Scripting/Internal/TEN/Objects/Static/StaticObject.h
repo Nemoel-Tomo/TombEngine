@@ -22,17 +22,25 @@ public:
 	Static(Static const& other) = delete;
 
 	static void Register(sol::table & parent);
+
+	void Enable();
+	void Disable();
+	bool GetActive();
+	bool GetSolid();
+	void SetSolid(bool yes);
 	Rotation GetRot() const;
 	void SetRot(Rotation const& rot);
-
 	Vec3 GetPos() const;
 	void SetPos(Vec3 const & pos);
+	float GetScale() const;
+	void SetScale(float const& scale);
 	std::string GetName() const;
 	void SetName(std::string const & name);
 	int GetSlot() const;
 	void SetSlot(int slot);
 	ScriptColor GetColor() const;
 	void SetColor(ScriptColor const & col);
+	void Shatter();
 
 private:
 	MESH_INFO & m_mesh;

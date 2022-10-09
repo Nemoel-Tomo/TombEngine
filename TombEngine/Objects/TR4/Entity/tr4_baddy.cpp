@@ -1,23 +1,24 @@
 #include "framework.h"
-#include "tr4_baddy.h"
+#include "Objects/TR4/Entity/tr4_baddy.h"
 
-#include "Game/items.h"
+#include "Game/animation.h"
 #include "Game/collision/collide_room.h"
 #include "Game/control/box.h"
+#include "Game/control/control.h"
+#include "Game/control/lot.h"
 #include "Game/effects/effects.h"
+#include "Game/itemdata/creature_info.h"
+#include "Game/items.h"
 #include "Game/Lara/lara.h"
 #include "Game/Lara/lara_fire.h"
-#include "Game/people.h"
-#include "Game/control/control.h"
-#include "Game/animation.h"
-#include "Game/control/lot.h"
-#include "Game/itemdata/creature_info.h"
 #include "Game/misc.h"
+#include "Game/people.h"
+#include "Specific/level.h"
 #include "Specific/prng.h"
 #include "Specific/setup.h"
-#include "Specific/level.h"
 
 using namespace TEN::Math::Random;
+using std::vector;
 
 /*
 ID_BADDY1
@@ -51,9 +52,9 @@ ID_BADDY2
 
 namespace TEN::Entities::TR4
 {
-	BiteInfo BaddyGunBite = { 0, -16, 200, 11 };
-	BiteInfo BaddySwordBite = { 0, 0, 0, 15 };
-	const std::vector<int> BaddySwordAttackJoints = { 14, 15, 16 };
+	const auto BaddyGunBite	  = BiteInfo(Vector3(0.0f, -16.0f, 200.0f), 11);
+	const auto BaddySwordBite = BiteInfo(Vector3::Zero, 15);
+	const vector<int> BaddySwordAttackJoints = { 14, 15, 16 };
 
 	#define BADDY_USE_UZI	24
 
@@ -421,7 +422,7 @@ namespace TEN::Entities::TR4
 		// Handle baddy firing
 		if (creature->FiredWeapon)
 		{
-			auto pos = Vector3Int(BaddyGunBite.x, BaddyGunBite.y, BaddyGunBite.z);
+			auto pos = Vector3Int(BaddyGunBite.Position);
 			GetJointAbsPosition(item, &pos, BaddyGunBite.meshNum);
 
 			TriggerDynamicLight(pos.x, pos.y, pos.z, 4 * creature->FiredWeapon + 8, 24, 16, 4);
@@ -444,7 +445,7 @@ namespace TEN::Entities::TR4
 				if (item->Pose.Position.y >= item->Floor)
 				{
 					item->Pose.Position.y = item->Floor;
-					item->Animation.VerticalVelocity = 0;
+					item->Animation.Velocity.y = 0;
 					item->Animation.IsAirborne = false;
 				}
 
@@ -461,7 +462,7 @@ namespace TEN::Entities::TR4
 				if (item->Pose.Position.y >= item->Floor)
 				{
 					item->Pose.Position.y = item->Floor;
-					item->Animation.VerticalVelocity = 0;
+					item->Animation.Velocity.y = 0;
 					item->Animation.IsAirborne = false;
 					item->Animation.TargetState = BADDY_STATE_FREEFALL_LAND_DEATH;
 				}
@@ -478,7 +479,7 @@ namespace TEN::Entities::TR4
 				item->Animation.AnimNumber = Objects[objectNumber].animIndex + BADDY_ANIM_MONKEY_TO_FREEFALL;
 				item->Animation.FrameNumber = g_Level.Anims[item->Animation.AnimNumber].frameBase;
 				item->Animation.ActiveState = BADDY_STATE_MONKEY_TO_FREEFALL;
-				item->Animation.Velocity = 0;
+				item->Animation.Velocity.z = 0;
 				break;
 
 			default:
@@ -770,7 +771,7 @@ namespace TEN::Entities::TR4
 							item->Animation.TargetState = BADDY_STATE_HOLSTER_GUN;
 						else if (AI.distance >= pow(SECTOR(0.5f), 2))
 							item->Animation.TargetState = BADDY_STATE_SWORD_HIT_FRONT;
-						else if (GetRandomControl() & 1)
+						else if (TestProbability(0.5f))
 							item->Animation.TargetState = BADDY_STATE_SWORD_HIT_LEFT;
 						else
 							item->Animation.TargetState = BADDY_STATE_SWORD_HIT_RIGHT;
@@ -936,14 +937,8 @@ namespace TEN::Entities::TR4
 						if (item->Animation.FrameNumber > g_Level.Anims[item->Animation.AnimNumber].frameBase + FRAME_BADDY_SWORD_HIT_DAMAGE_MIN &&
 							item->Animation.FrameNumber < g_Level.Anims[item->Animation.AnimNumber].frameBase + FRAME_BADDY_SWORD_HIT_DAMAGE_MAX)
 						{
-							CreatureEffect2(
-								item,
-								&BaddySwordBite,
-								10,
-								item->Pose.Orientation.y,
-								DoBloodSplat);
-
 							DoDamage(creature->Enemy, 120);
+							CreatureEffect2(item, BaddySwordBite, 10, item->Pose.Orientation.y, DoBloodSplat);
 							currentCreature->Flags = 1;
 						}
 					}
@@ -1033,8 +1028,8 @@ namespace TEN::Entities::TR4
 					{
 						SetAnimation(LaraItem, LA_JUMP_UP);
 						LaraItem->Animation.IsAirborne = true;
-						LaraItem->Animation.VerticalVelocity = 2;
-						LaraItem->Animation.VerticalVelocity = 1;
+						LaraItem->Animation.Velocity.y = 2;
+						LaraItem->Animation.Velocity.y = 1;
 						LaraItem->Pose.Position.y += CLICK(0.75f);
 						Lara.Control.HandStatus = HandStatus::Free;
 						currentCreature->Flags = 1;
@@ -1167,7 +1162,7 @@ namespace TEN::Entities::TR4
 				if (!item->HitStatus)
 					item->ItemFlags[2]--;
 				
-				if (!ShotLara(item, &AI, &BaddyGunBite, joint1, 15))
+				if (!ShotLara(item, &AI, BaddyGunBite, joint1, 15))
 					item->Animation.TargetState = BADDY_STATE_IDLE;
 
 				break;
@@ -1220,20 +1215,20 @@ namespace TEN::Entities::TR4
 			case BADDY_STATE_BLIND:
 				if (!FlashGrenadeAftershockTimer)
 				{
-					if ((GetRandomControl() & 0x7F) == 0)
+					if (TestProbability(1.0f / 128))
 						item->Animation.TargetState = BADDY_STATE_IDLE;
 				}
 
 				break;
 
 			case BADDY_STATE_SOMERSAULT:
-				if (item->Animation.AnimNumber == Objects[objectNumber].animIndex + BADDY_ANIM_SOMERSAULT_END)
+				if (item->Animation.AnimNumber == (Objects[objectNumber].animIndex + BADDY_ANIM_SOMERSAULT_END))
 				{
 					ClampRotation(&item->Pose, AI.angle, ANGLE(7.0f));
 					break;
 				}
 
-				if (item->Animation.FrameNumber != g_Level.Anims[item->Animation.AnimNumber].frameBase + FRAME_BADDY_SOMERSAULT_START_TAKE_OFF)
+				if (item->Animation.FrameNumber != (g_Level.Anims[item->Animation.AnimNumber].frameBase + FRAME_BADDY_SOMERSAULT_START_TAKE_OFF))
 					break;
 
 				currentCreature->LOT.IsJumping = true;

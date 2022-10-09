@@ -16,12 +16,12 @@
 #include "Game/effects/lightning.h"
 #include "Game/effects/lara_fx.h"
 
-namespace TEN::Entities::TR5
-{
 	using namespace TEN::Effects::Lara;
 	using namespace TEN::Effects::Lightning;
 
-	BiteInfo CyborgGunBite = { 0, 300, 64, 7 };
+namespace TEN::Entities::Creatures::TR5
+{
+	const auto CyborgGunBite = BiteInfo(Vector3(0.0f, 300.0f, 64.0f), 7);
 	byte HitmanJoints[12] = { 15, 14, 13, 6, 5, 12, 7, 4, 10, 11, 19 };
 
 	enum CyborgState
@@ -124,11 +124,7 @@ namespace TEN::Entities::TR5
 		auto* item = &g_Level.Items[itemNumber];
 
 		ClearItem(itemNumber);
-
-		item->Animation.AnimNumber = Objects[item->ObjectNumber].animIndex + 4;
-		item->Animation.FrameNumber = g_Level.Anims[item->Animation.AnimNumber].frameBase;
-		item->Animation.TargetState = CYBORG_STATE_IDLE;
-		item->Animation.ActiveState = CYBORG_STATE_IDLE;
+		SetAnimation(item, CYBORG_ANIM_IDLE);
 	}
 
 	static void TriggerHitmanSparks(int x, int y, int z, short xv, short yv, short zv)
@@ -174,13 +170,13 @@ namespace TEN::Entities::TR5
 		if (CreatureActive(itemNumber))
 		{
 			auto* item = &g_Level.Items[itemNumber];
-			auto* creature = GetCreatureInfo(item);
 			auto* object = &Objects[item->ObjectNumber];
+			auto* creature = GetCreatureInfo(item);
 
 			short angle = 0;
-			short joint2 = 0;
-			short joint1 = 0;
 			short joint0 = 0;
+			short joint1 = 0;
+			short joint2 = 0;
 
 			int x = item->Pose.Position.x;
 			int z = item->Pose.Position.z;
@@ -223,7 +219,7 @@ namespace TEN::Entities::TR5
 
 			if (creature->FiredWeapon)
 			{
-				Vector3Int pos = { CyborgGunBite.x, CyborgGunBite.y, CyborgGunBite.z };
+				auto pos = Vector3Int(CyborgGunBite.Position);
 				GetJointAbsPosition(item, &pos, CyborgGunBite.meshNum);
 
 				TriggerDynamicLight(pos.x, pos.y, pos.z, 2 * creature->FiredWeapon + 10, 192, 128, 32);
@@ -335,7 +331,7 @@ namespace TEN::Entities::TR5
 				angle = CreatureTurn(item, creature->MaxTurn);
 
 				if (laraAI.distance < pow(SECTOR(2), 2) &&
-					LaraItem->Animation.Velocity> 20 ||
+					LaraItem->Animation.Velocity.z > 20 ||
 					item->HitStatus ||
 					TargetVisible(item, &laraAI))
 				{
@@ -596,7 +592,7 @@ namespace TEN::Entities::TR5
 						((byte)item->Animation.FrameNumber - (byte)g_Level.Anims[item->Animation.AnimNumber].frameBase) & 1)
 					{
 						creature->FiredWeapon = 1;
-						ShotLara(item, &AI, &CyborgGunBite, joint0, 12);
+						ShotLara(item, &AI, CyborgGunBite, joint0, 12);
 					}
 
 					break;
@@ -664,7 +660,7 @@ namespace TEN::Entities::TR5
 
 					item->ItemFlags[3]++;
 					creature->ReachedGoal = false;
-					creature->Enemy = NULL;
+					creature->Enemy = nullptr;
 				}
 			}
 

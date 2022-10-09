@@ -12,7 +12,7 @@
 #include "Game/items.h"
 #include "Game/Lara/lara.h"
 
-namespace TEN::Entities::TR5
+namespace TEN::Entities::Creatures::TR5
 {
 	int GunShipCounter = 0;
 
@@ -82,7 +82,7 @@ namespace TEN::Entities::TR5
 				return AnimateItem(item);
 
 			Vector3Int hitPos;
-			MESH_INFO* hitMesh = NULL;
+			MESH_INFO* hitMesh = nullptr;
 			int objOnLos = ObjectOnLOS2(&start, &end, &hitPos, &hitMesh, GAME_OBJECT_ID::ID_LARA);
 
 			if (objOnLos == NO_LOS_ITEM || objOnLos < 0)
@@ -107,7 +107,6 @@ namespace TEN::Entities::TR5
 					if (StaticObjects[hitMesh->staticNumber].shatterType != SHT_NONE)
 					{
 						ShatterObject(0, hitMesh, 64, end.roomNumber, 0);
-						hitMesh->flags &= ~StaticMeshFlags::SM_VISIBLE;
 						TestTriggers(hitMesh->pos.Position.x, hitMesh->pos.Position.y, hitMesh->pos.Position.z, end.roomNumber, true);
 						SoundEffect(GetShatterSound(hitMesh->staticNumber), &hitMesh->pos);
 					}

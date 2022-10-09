@@ -13,11 +13,13 @@
 #include "Game/people.h"
 #include "Sound/sound.h"
 #include "Specific/level.h"
+#include "Specific/prng.h"
 #include "Specific/trmath.h"
 
+using namespace TEN::Math::Random;
 using std::vector;
 
-namespace TEN::Entities::TR1
+namespace TEN::Entities::Creatures::TR1
 {
 	constexpr auto WINGED_MUTANT_IDLE_JUMP_ATTACK_DAMAGE = 150;
 	constexpr auto WINGED_MUTANT_RUN_JUMP_ATTACK_DAMAGE  = 100;
@@ -29,8 +31,8 @@ namespace TEN::Entities::TR1
 	constexpr auto WINGED_MUTANT_IDLE_JUMP_ATTACK_RANGE = SQUARE(SECTOR(2.5f));
 	constexpr auto WINGED_MUTANT_ATTACK_RANGE			= SQUARE(SECTOR(3.75f));
 
-	constexpr auto WINGED_MUTANT_POSE_CHANCE   = 85;
-	constexpr auto WINGED_MUTANT_UNPOSE_CHANCE = 200;
+	constexpr auto WINGED_MUTANT_POSE_CHANCE   = 1.0f / 400;
+	constexpr auto WINGED_MUTANT_UNPOSE_CHANCE = 1.0f / 164;
 
 	constexpr auto WINGED_MUTANT_FLY_VELOCITY	= CLICK(1) / 8;
 	constexpr auto WINGED_MUTANT_SHARD_VELOCITY = 250;
@@ -127,7 +129,7 @@ namespace TEN::Entities::TR1
 		WMUTANT_CONF_DISABLE_BOMB_WEAPON
 	};
 
-	static void SwitchPathfinding(CreatureInfo* creature, WingedMutantPathFinding path)
+	void SwitchPathfinding(CreatureInfo* creature, WingedMutantPathFinding path)
 	{
 		switch (path)
 		{
@@ -145,9 +147,9 @@ namespace TEN::Entities::TR1
 		}
 	}
 
-	static WingedMutantProjectileType CanTargetLara(ItemInfo* item, CreatureInfo* creature, AI_INFO* AI)
+	WingedMutantProjectileType CanTargetLara(ItemInfo* item, CreatureInfo* creature, AI_INFO* AI)
 	{
-		if (Targetable(item, creature, AI) &&  (AI->zoneNumber != AI->enemyZone || AI->distance > WINGED_MUTANT_ATTACK_RANGE))
+		if (Targetable(item, AI) &&  (AI->zoneNumber != AI->enemyZone || AI->distance > WINGED_MUTANT_ATTACK_RANGE))
 		{
 			if ((AI->angle > 0 && AI->angle < ANGLE(45.0f)) &&
 				item->TestFlags(WMUTANT_OCB_DISABLE_DART_WEAPON, false))
@@ -165,7 +167,7 @@ namespace TEN::Entities::TR1
 		return WMUTANT_PROJ_NONE;
 	}
 
-	static void WingedInitOCB(ItemInfo* item, CreatureInfo* creature)
+	void WingedInitOCB(ItemInfo* item, CreatureInfo* creature)
 	{
 		if (item->TestOcb(WMUTANT_OCB_START_AERIAL))
 		{
@@ -294,7 +296,7 @@ namespace TEN::Entities::TR1
 			case WMUTANT_STATE_INACTIVE:
 				creature->MaxTurn = 0;
 
-				if (TargetVisible(item, creature, &AI) || creature->HurtByLara)
+				if (TargetVisible(item, &AI) || creature->HurtByLara)
 					item->Animation.TargetState = WMUTANT_STATE_IDLE;
 
 				break;
@@ -337,7 +339,7 @@ namespace TEN::Entities::TR1
 					if (AI.distance < WINGED_MUTANT_WALK_RANGE)
 					{
 						if (AI.zoneNumber == AI.enemyZone ||
-							GetRandomControl() < WINGED_MUTANT_UNPOSE_CHANCE)
+							TestProbability(WINGED_MUTANT_UNPOSE_CHANCE))
 						{
 							item->Animation.TargetState = WMUTANT_STATE_WALK_FORWARD;
 						}
@@ -345,7 +347,7 @@ namespace TEN::Entities::TR1
 					else
 						item->Animation.TargetState = WMUTANT_STATE_IDLE;
 				}
-				else if (creature->Mood == MoodType::Bored && GetRandomControl() < WINGED_MUTANT_UNPOSE_CHANCE)
+				else if (creature->Mood == MoodType::Bored && TestProbability(WINGED_MUTANT_UNPOSE_CHANCE))
 					item->Animation.TargetState = WMUTANT_STATE_WALK_FORWARD;
 				else if (creature->Mood == MoodType::Attack ||
 					creature->Mood == MoodType::Escape)
@@ -363,7 +365,7 @@ namespace TEN::Entities::TR1
 				else if (creature->Mood == MoodType::Bored ||
 					(creature->Mood == MoodType::Stalk && AI.zoneNumber != AI.enemyZone))
 				{
-					if (GetRandomControl() < WINGED_MUTANT_POSE_CHANCE)
+					if (TestProbability(WINGED_MUTANT_POSE_CHANCE))
 						item->Animation.TargetState = WMUTANT_STATE_POSE;
 				}
 				else if (creature->Mood == MoodType::Stalk &&

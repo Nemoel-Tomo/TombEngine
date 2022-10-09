@@ -63,15 +63,25 @@ void ShatterObject(SHATTER_ITEM* item, MESH_INFO* mesh, int num, short roomNumbe
 {
 	int meshIndex = 0;
 	short yRot = 0;
+	float scale;
 	Vector3 pos;
 	bool isStatic;
 
 	if (mesh)
 	{
+		if (!(mesh->flags & StaticMeshFlags::SM_VISIBLE))
+			return;
+
 		isStatic = true;
 		meshIndex = StaticObjects[mesh->staticNumber].meshNumber;
 		yRot = mesh->pos.Orientation.y;
 		pos = Vector3(mesh->pos.Position.x, mesh->pos.Position.y, mesh->pos.Position.z);
+		scale = mesh->scale;
+
+		mesh->flags &= ~StaticMeshFlags::SM_VISIBLE;
+		SmashedMeshRoom[SmashedMeshCount] = roomNumber;
+		SmashedMesh[SmashedMeshCount] = mesh;
+		SmashedMeshCount++;
 	}
 	else
 	{
@@ -79,6 +89,7 @@ void ShatterObject(SHATTER_ITEM* item, MESH_INFO* mesh, int num, short roomNumbe
 		meshIndex = item->meshIndex;
 		yRot = item->yRot;
 		pos = Vector3(item->sphere.x, item->sphere.y, item->sphere.z);
+		scale = 1.0f;
 	}
 
 	auto fragmentsMesh = &g_Level.Meshes[meshIndex];
@@ -118,9 +129,9 @@ void ShatterObject(SHATTER_ITEM* item, MESH_INFO* mesh, int num, short roomNumbe
 
 				Matrix rotationMatrix = Matrix::CreateFromYawPitchRoll(TO_RAD(yRot), 0, 0);
 
-				Vector3 pos1 = fragmentsMesh->positions[poly->indices[indices[j * 3 + 0]]];
-				Vector3 pos2 = fragmentsMesh->positions[poly->indices[indices[j * 3 + 1]]];
-				Vector3 pos3 = fragmentsMesh->positions[poly->indices[indices[j * 3 + 2]]];
+				Vector3 pos1 = fragmentsMesh->positions[poly->indices[indices[j * 3 + 0]]] * scale;
+				Vector3 pos2 = fragmentsMesh->positions[poly->indices[indices[j * 3 + 1]]] * scale;
+				Vector3 pos3 = fragmentsMesh->positions[poly->indices[indices[j * 3 + 2]]] * scale;
 
 				Vector2 uv1 = poly->textureCoordinates[indices[j * 3 + 0]];
 				Vector2 uv2 = poly->textureCoordinates[indices[j * 3 + 1]];

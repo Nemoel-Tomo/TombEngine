@@ -9,9 +9,11 @@
 #include "Game/misc.h"
 #include "Game/people.h"
 #include "Specific/level.h"
+#include "Specific/prng.h"
 #include "Specific/setup.h"
 #include "Specific/trmath.h"
 
+using namespace TEN::Math::Random;
 using std::vector;
 
 namespace TEN::Entities::TR4
@@ -21,12 +23,12 @@ namespace TEN::Entities::TR4
 	constexpr auto BIG_BEETLE_ATTACK_RANGE = SQUARE(CLICK(1));
 	constexpr auto BIG_BEETLE_AWARE_RANGE  = SQUARE(CLICK(12));
 
-	const vector<int> BigBeetleAttackJoints = { 5, 6 };
 	const auto BigBeetleBite = BiteInfo(Vector3::Zero, 12);
+	const vector<int> BigBeetleAttackJoints = { 5, 6 };
 
 	enum BigBeetleState
 	{
-		BBEETLE_STATE_NONE = 0,
+		// No state 0.
 		BBEETLE_STATE_IDLE = 1,
 		BBEETLE_STATE_TAKE_OFF = 2,
 		BBEETLE_STATE_FLY_FORWARD = 3,
@@ -92,7 +94,7 @@ namespace TEN::Entities::TR4
 					{
 						SetAnimation(item, BBEETLE_ANIM_DEATH_START);
 						item->Animation.IsAirborne = true;
-						item->Animation.Velocity = 0;
+						item->Animation.Velocity.z = 0;
 						item->Pose.Orientation.x = 0;
 					}
 				}
@@ -100,7 +102,7 @@ namespace TEN::Entities::TR4
 				{
 					item->Animation.TargetState = BBEETLE_STATE_DEATH_END;
 					item->Animation.IsAirborne = false;
-					item->Animation.VerticalVelocity = 0;
+					item->Animation.Velocity.y = 0;
 					item->Pose.Position.y = item->Floor;
 				}
 			}
@@ -120,7 +122,7 @@ namespace TEN::Entities::TR4
 			angle = CreatureTurn(item, creature->MaxTurn);
 
 			if (item->HitStatus || AI.distance > BIG_BEETLE_AWARE_RANGE ||
-				!(GetRandomControl() & 0x7F))
+				TestProbability(1.0f / 128))
 			{
 				creature->Flags = 0;
 			}
@@ -197,8 +199,8 @@ namespace TEN::Entities::TR4
 				if (item->Animation.RequiredState)
 					item->Animation.TargetState = item->Animation.RequiredState;
 				else if (!item->HitStatus && item->AIBits != MODIFY &&
-					GetRandomControl() >= 384 &&
-					((creature->Mood != MoodType::Bored && GetRandomControl() >= 128) ||
+					TestProbability(0.99f) &&
+					((creature->Mood != MoodType::Bored && TestProbability(0.996f)) ||
 						creature->HurtByLara || item->AIBits == MODIFY))
 				{
 					if (AI.ahead)

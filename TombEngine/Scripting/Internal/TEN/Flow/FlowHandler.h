@@ -27,7 +27,6 @@ public:
 	bool							PlayAnyLevel{ true };
 	bool							FlyCheat{ true };
 	bool							DebugMode{ false };
-	short							GameFarView{ 0 };
 
 	// New animation flag table
 	Animations			Anims{};
@@ -47,12 +46,15 @@ public:
 	void				SetSettings(Settings const & src);
 	Settings*			GetSettings();
 	Level*				GetLevel(int id);
+	Level*				GetCurrentLevel();
 	int					GetLevelNumber(std::string const& flieName);
 	int					GetNumLevels() const;
+	void				EndLevel(std::optional<int> nextLevel);
+	int					GetSecretCount() const;
+	void				SetSecretCount(int secretsNum);
+	void				AddSecret(int levelSecretIndex);
 	void				SetIntroImagePath(std::string const& path);
 	void				SetTitleScreenImagePath(std::string const& path);
-	void				SetGameFarView(short val);
-	short				GetGameFarView() const;
 	bool				IsFlyCheatEnabled() const;
 	bool				CanPlayAnyLevel() const;
 

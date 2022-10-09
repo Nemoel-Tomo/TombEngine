@@ -14,9 +14,9 @@
 
 using namespace TEN::Entities::Generic;
 
-namespace TEN::Entities::TR5
+namespace TEN::Entities::Creatures::TR5
 {
-	BiteInfo ImpBite = { 0, 100, 0, 9 };
+	const auto ImpBite = BiteInfo(Vector3(0.0f, 100.0f, 0.0f), 9);
 
 	enum ImpState
 	{
@@ -109,7 +109,7 @@ namespace TEN::Entities::TR5
 			fx->fallspeed = 0;
 			fxNumber = Objects[ID_IMP_ROCK].meshIndex + (GetRandomControl() & 7);
 			fx->objectNumber = ID_IMP_ROCK;
-			fx->shade = 16912;
+			fx->color = Vector4::One;
 			fx->counter = 0;
 			fx->frameNumber = fxNumber;
 			fx->flag1 = 2;
@@ -243,7 +243,7 @@ namespace TEN::Entities::TR5
 						item->TouchBits & 0x280)
 					{
 						DoDamage(creature->Enemy, 3);
-						CreatureEffect2(item, &ImpBite, 10, item->Pose.Orientation.y, DoBloodSplat);
+						CreatureEffect2(item, ImpBite, 10, item->Pose.Orientation.y, DoBloodSplat);
 					}
 
 					break;
